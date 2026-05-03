@@ -41,7 +41,7 @@ cp .env.example .env
 python release_notify.py <release> <rc> <commit1> [commit2 ...]
 ```
 
-Пример:
+Пример запуска скрипта:
 
 ```bash
 python release_notify.py 26.1.0 7 \
@@ -50,6 +50,16 @@ python release_notify.py 26.1.0 7 \
 ```
 
 При первом запуске (или если сессия истекла) откроется браузер — залогинься в Jira. После этого скрипт продолжит работу автоматически.
+
+## Пример сообщения в Telegram
+
+```
+📋 На QA 26.1.0-rc7:
+DEV-12345 - Fix null pointer exception in payment flow
+DEV-67890 - Update user profile page layout
+```
+
+Каждый тикет — кликабельная ссылка на соответствующую задачу в Jira.
 
 ## Структура проекта
 
