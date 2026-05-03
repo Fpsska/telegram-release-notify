@@ -38,13 +38,20 @@ cp .env.example .env
 ## Использование
 
 ```bash
-python release_notify.py <release> <rc> <commit1> [commit2 ...]
+python release_notify.py <environment> <release> <rc> <commit1> [commit2 ...]
 ```
+
+| Параметр      | Описание |
+|---------------|----------|
+| `environment` | Название среды, на которую деплоится релиз (например, `QA`, `PROD`) |
+| `release`     | Версия релиза (например, `26.1.0`) |
+| `rc`          | Номер release candidate |
+| `commit...`   | Один или несколько коммитов в формате `hash(Type TICKET-123 Description)` |
 
 Пример запуска скрипта:
 
 ```bash
-python release_notify.py 26.1.0 7 \
+python release_notify.py QA 26.1.0 7 \
   "abc12345(BugFix DEV-12345 Fix something)" \
   "def67890(BugFix DEV-67890 Fix something else)"
 ```
