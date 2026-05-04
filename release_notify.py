@@ -179,7 +179,7 @@ async def main() -> None:
         url = f"{JIRA_BASE}/{ticket}"
         safe_title = title.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
         lines.append(f'<a href="{url}">{ticket} - {safe_title}</a>')
-    message = "\n".join(lines)
+    message = "\n\n".join(lines)
 
     print("\n--- Telegram message ---")
     print(message)
