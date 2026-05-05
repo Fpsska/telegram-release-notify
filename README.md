@@ -29,11 +29,12 @@ playwright install chromium
 cp .env.example .env
 ```
 
-| Переменная  | Описание |
-|-------------|----------|
-| `BOT_TOKEN` | Токен Telegram-бота (от [@BotFather](https://t.me/BotFather)) |
-| `CHAT_ID`   | ID чата/группы куда отправлять сообщение |
-| `JIRA_HOST` | Хост Jira (например, `jira.yourcompany.com`) |
+| Переменная         | Описание |
+|--------------------|----------|
+| `BOT_TOKEN`        | Токен Telegram-бота (от [@BotFather](https://t.me/BotFather)) |
+| `CHAT_ID`          | ID чата/группы куда отправлять сообщение |
+| `JIRA_HOST`        | Хост Jira (например, `jira.yourcompany.com`) |
+| `TELEGRAM_PROXY`   | Прокси для запросов к Telegram API (необязательно). Формат: `socks5://user:pass@host:port` или `http://user:pass@host:port` |
 
 ## Использование
 
