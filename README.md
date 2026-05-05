@@ -17,7 +17,7 @@
 ## Установка
 
 ```bash
-pip install requests playwright python-dotenv
+pip install -r requirements.txt
 playwright install chromium
 ```
 
