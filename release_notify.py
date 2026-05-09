@@ -142,7 +142,7 @@ async def main() -> None:
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
     parser = argparse.ArgumentParser(description="Send release notification to Telegram")
-    parser.add_argument("environment", help="Уnvironment, e.g. QA")
+    parser.add_argument("environment", help="Environment, e.g. QA")
     parser.add_argument("release", help="Release version, e.g. 26.1.0")
     parser.add_argument("rc", help="RC number, e.g. 7")
     parser.add_argument("commits", nargs="+", help='Commit strings, e.g. "abc123(BugFix DEV-123 Fix something)"')
