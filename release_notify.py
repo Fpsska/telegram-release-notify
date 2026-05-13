@@ -33,6 +33,9 @@ TITLE_SELECTORS = [
 
 LOGIN_INDICATORS = ["login", "signin", "sign-in", "log-in", "authenticate"]
 
+# Target status for ticket update
+TARGET_STATUS = "Ready For Testing"
+
 
 # ── Helpers ──────────────────────────────────────────────────────────────────
 def extract_jira_tickets(commits: list[str]) -> list[str]:
@@ -44,7 +47,6 @@ def extract_jira_tickets(commits: list[str]) -> list[str]:
                 seen.add(match)
                 tickets.append(match)
     return tickets
-
 
 def is_login_page(url: str) -> bool:
     return any(ind in url.lower() for ind in LOGIN_INDICATORS)
@@ -106,6 +108,32 @@ async def scrape_titles(ctx, tickets: list[str]) -> dict[str, str]:
         ticket_titles[ticket] = title or "Unknown"
 
     return ticket_titles
+
+
+# ── Update ticket status ────────────────────────────────────────────────────
+async def update_ticket_status(page, tickets: list[str]) -> None:
+    """
+    Updates status of tickets to TARGET_STATUS by clicking the button.
+    Logs errors without stopping the process.
+    """
+    for ticket in tickets:
+        url = f"{JIRA_BASE}/{ticket}"
+        print(f"  Updating: {url}")
+        
+        try:
+            await page.goto(url, wait_until="domcontentloaded", timeout=15000)
+            await page.wait_for_load_state("load", timeout=10000)
+            
+            # Find and click the "Ready For Testing" link
+            link = page.get_by_text(TARGET_STATUS, exact=True)
+            if await link.count() > 0:
+                await link.click()
+                print(f"    ✓ Status updated to '{TARGET_STATUS}'")
+            else:
+                print(f"    [WARNING] Link '{TARGET_STATUS}' not found for {ticket}")
+        except Exception as e:
+            print(f"    [WARNING] Failed to update status for {ticket}: {e}")
+            continue
 
 
 # ── Telegram ─────────────────────────────────────────────────────────────────
@@ -172,6 +200,11 @@ async def main() -> None:
         )
         print("\nScraping titles...")
         ticket_titles = await scrape_titles(ctx, tickets)
+        
+        page = ctx.pages[0] if ctx.pages else await ctx.new_page()
+        print("\nUpdating ticket statuses...")
+        await update_ticket_status(page, tickets)
+        
         await ctx.close()
 
     lines = [f"\U0001f4cb На {ENVIRONMENT} {RELEASE}-rc{RC}:"]
