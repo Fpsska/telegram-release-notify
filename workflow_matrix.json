@@ -1,0 +1,167 @@
+{
+  "Task": {
+    "Blocked": {
+      "Open": "Open",
+      "In Progress": "Start Progress",
+      "Resolved": "Resolve Issue"
+    },
+    "Resolved": {
+      "Closed": "Close Issue",
+      "Testing": "Start Testing",
+      "Open": "Reopen Issue"
+    },
+    "In Progress": {
+      "Blocked": "Block",
+      "Open": "Stop Progress",
+      "Testing": "Start Testing",
+      "Closed": "Close Issue",
+      "Review": "Review",
+      "Resolved": "Resolve Issue"
+    },
+    "Closed": {
+      "Open": "Reopen Issue"
+    },
+    "Testing": {
+      "Closed": "Close Issue",
+      "Resolved": "Resolve Issue",
+      "In Progress": "Start Progress",
+      "Review": "Review"
+    },
+    "Review": {
+      "Blocked": "Block",
+      "Resolved": "Resolve Issue",
+      "Testing": "Start Testing",
+      "In Progress": "Start Progress"
+    },
+    "Open": {
+      "In Progress": "Start Progress",
+      "Closed": "Close Issue",
+      "Resolved": "Resolve Issue",
+      "Blocked": "Block"
+    }
+  },
+  "Sub-task": {
+    "Blocked": {
+      "Open": "Open",
+      "In Progress": "Start Progress",
+      "Resolved": "Resolve Issue"
+    },
+    "Resolved": {
+      "Closed": "Close Issue",
+      "Testing": "Start Testing",
+      "Open": "Reopen Issue"
+    },
+    "In Progress": {
+      "Blocked": "Block",
+      "Open": "Stop Progress",
+      "Testing": "Start Testing",
+      "Closed": "Close Issue",
+      "Review": "Review",
+      "Resolved": "Resolve Issue"
+    },
+    "Closed": {
+      "Open": "Reopen Issue"
+    },
+    "Testing": {
+      "Closed": "Close Issue",
+      "Resolved": "Resolve Issue",
+      "In Progress": "Start Progress",
+      "Review": "Review"
+    },
+    "Review": {
+      "Blocked": "Block",
+      "Resolved": "Resolve Issue",
+      "Testing": "Start Testing",
+      "In Progress": "Start Progress"
+    },
+    "Open": {
+      "In Progress": "Start Progress",
+      "Closed": "Close Issue",
+      "Resolved": "Resolve Issue",
+      "Blocked": "Block"
+    }
+  },
+  "Improvement": {
+    "Blocked": {
+      "Open": "Open",
+      "In Progress": "Start Progress",
+      "Resolved": "Resolve Issue"
+    },
+    "Resolved": {
+      "Closed": "Close Issue",
+      "Testing": "Start Testing",
+      "Open": "Reopen Issue"
+    },
+    "In Progress": {
+      "Blocked": "Block",
+      "Open": "Stop Progress",
+      "Testing": "Start Testing",
+      "Closed": "Close Issue",
+      "Review": "Review",
+      "Resolved": "Resolve Issue"
+    },
+    "Closed": {
+      "Open": "Reopen Issue"
+    },
+    "Testing": {
+      "Closed": "Close Issue",
+      "Resolved": "Resolve Issue",
+      "In Progress": "Start Progress",
+      "Review": "Review"
+    },
+    "Review": {
+      "Blocked": "Block",
+      "Resolved": "Resolve Issue",
+      "Testing": "Start Testing",
+      "In Progress": "Start Progress"
+    },
+    "Open": {
+      "In Progress": "Start Progress",
+      "Closed": "Close Issue",
+      "Resolved": "Resolve Issue",
+      "Blocked": "Block"
+    }
+  },
+  "Bug": {
+    "DEV QA Testing": {
+      "DEV Ready For Testing": "Stop Testing",
+      "Resolved": "QA OK",
+      "In Progress": "QA Not OK",
+      "Closed": "Close Issue"
+    },
+    "Resolved": {
+      "Open": "Reopen Issue",
+      "Closed": "Close Issue"
+    },
+    "In Progress": {
+      "Review": "Review",
+      "Open": "Stop Progress",
+      "Closed": "Close Issue",
+      "Resolved": "Resolve Issue"
+    },
+    "DEV Ready For Testing": {
+      "In Progress": "Start Progress",
+      "DEV QA Testing": "Start Testing",
+      "Review": "Review"
+    },
+    "Blocked": {
+      "Blocked": "Blocked",
+      "Resolved": "Resolve Issue",
+      "Open": "Open",
+      "In Progress": "Start Progress"
+    },
+    "Review": {
+      "Resolved": "Resolve Issue",
+      "In Progress": "Start Progress",
+      "DEV Ready For Testing": "Ready For Testing"
+    },
+    "Open": {
+      "Closed": "Close Issue",
+      "In Progress": "Start Progress",
+      "Resolved": "Resolve Issue"
+    },
+    "Closed": {
+      "Open": "Reopen Issue"
+    }
+  }
+}

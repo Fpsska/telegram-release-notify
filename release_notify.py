@@ -1,37 +1,30 @@
 import argparse
-import asyncio
+import json
 import os
 import re
 import sys
-from pathlib import Path
+from collections import deque
+from jira import JIRA, Issue, JIRAError
 
 import requests
 from dotenv import load_dotenv
 
 load_dotenv()
 
+
 # ── Config ──────────────────────────────────────────────────────────────────
 JIRA_HOST = os.environ["JIRA_HOST"]
 JIRA_BASE = f"https://{JIRA_HOST}/browse"
+JIRA_USERNAME = os.environ["JIRA_USERNAME"]
+JIRA_PASSWORD = os.environ["JIRA_PASSWORD"]
+JIRA_QA_TESTERS = [u.strip() for u in os.environ["JIRA_QA_TESTERS"].split(",")]
+JIRA_QA_LEAD = os.environ["JIRA_QA_LEAD"]
+
+jira = JIRA(f"https://{JIRA_HOST}", auth=(JIRA_USERNAME, JIRA_PASSWORD))
 
 BOT_TOKEN = os.environ["BOT_TOKEN"]
 CHAT_ID = os.environ["CHAT_ID"]
 TELEGRAM_PROXY = os.environ.get("TELEGRAM_PROXY")
-
-USERDATA_DIR = Path("./browser_session/userdata")
-
-# CSS selectors for Jira Server/DC issue title (tried in order)
-TITLE_SELECTORS = [
-    "#summary-val",
-    "h1#summary-val",
-    "[data-test-id='issue.views.issue-base.foundation.summary.heading']",
-    "h1.issue-header-summary",
-    "h1[class*='summary']",
-    ".issue-summary h1",
-    "#issue-content h1",
-]
-
-LOGIN_INDICATORS = ["login", "signin", "sign-in", "log-in", "authenticate"]
 
 
 # ── Helpers ──────────────────────────────────────────────────────────────────
@@ -46,66 +39,134 @@ def extract_jira_tickets(commits: list[str]) -> list[str]:
     return tickets
 
 
-def is_login_page(url: str) -> bool:
-    return any(ind in url.lower() for ind in LOGIN_INDICATORS)
-
-
-# ── Scrape titles ────────────────────────────────────────────────────────────
-async def scrape_titles(ctx, tickets: list[str]) -> dict[str, str]:
-    """
-    Uses a single page for all tickets to preserve the session across navigations.
-    Opens a visible browser — user must log in if session is missing.
-    """
-    page = ctx.pages[0] if ctx.pages else await ctx.new_page()
-    ticket_titles: dict[str, str] = {}
-
+def find_issues(tickets: list[str]) -> list[Issue]:
+    issues: list[Issue] = []
     for ticket in tickets:
-        url = f"{JIRA_BASE}/{ticket}"
-        print(f"  Fetching: {url}")
+        try:
+            issue = jira.issue(ticket)
+            issues.append(issue)
+        except JIRAError as e:
+            print(f"Error getting issue: {e}")
+        except Exception as e:
+            print(f"Unexpected error: {e}")
+    return issues
 
-        await page.goto(url, wait_until="domcontentloaded", timeout=15000)
 
-        # If redirected to login — wait for user to log in (once)
-        if not page.url.startswith(f"https://{JIRA_HOST}/browse/"):
-            print("  Not logged in. Please log in to Jira (up to 5 minutes)...")
-            try:
-                await page.wait_for_url(
-                    lambda u: u.startswith(f"https://{JIRA_HOST}/browse/"),
-                    timeout=300_000,
-                )
-                await page.wait_for_load_state("networkidle", timeout=15000)
-                print(f"  Logged in! Current URL: {page.url}")
-            except Exception:
-                print("  Login timeout — skipping remaining tickets.")
-                ticket_titles[ticket] = "Login required"
-                break
+def load_workflow_matrix() -> dict:
+    """Load workflow matrix from JSON file."""
+    try:
+        with open("workflow_matrix.json", "r") as f:
+            return json.load(f)
+    except Exception as e:
+        print(f"Error loading workflow_matrix.json: {e}")
+        return {}
 
-        print(f"    URL before scrape: {page.url}")
-        if not page.url.startswith(f"https://{JIRA_HOST}/browse/"):
-            ticket_titles[ticket] = "Login required"
+
+def find_path_to_target(workflow_matrix: dict, issue_type: str, current_status: str, target_status: str) -> list[str]:
+    """
+    Find path from current_status to target_status using BFS.
+    Returns list of statuses to transition through.
+    """
+    if issue_type not in workflow_matrix:
+        return []
+
+    if current_status == target_status:
+        return [current_status]
+
+    issue_workflow = workflow_matrix[issue_type]
+    queue = deque([(current_status, [current_status])])
+    visited = {current_status}
+
+    while queue:
+        status, path = queue.popleft()
+
+        if status not in issue_workflow:
             continue
 
-        await page.wait_for_load_state("load", timeout=10000)
+        for next_status in issue_workflow[status].keys():
+            if next_status == target_status:
+                return path + [next_status]
 
-        title = None
-        for selector in TITLE_SELECTORS:
-            try:
-                el = await page.wait_for_selector(selector, timeout=500)
-                if el:
-                    title = (await el.inner_text()).strip()
-                    if title:
-                        break
-            except Exception:
-                continue
+            if next_status not in visited:
+                visited.add(next_status)
+                queue.append((next_status, path + [next_status]))
 
-        if not title:
-            page_title = await page.title()
-            title = re.sub(r'\s*[-–|].*$', '', page_title).strip()
+    return []
 
-        print(f"    -> {title or 'Unknown'}")
-        ticket_titles[ticket] = title or "Unknown"
 
-    return ticket_titles
+def change_issue_status(issue: Issue, workflow_matrix: dict, target_status: str) -> bool:
+    """
+    Transition issue to target status using workflow matrix path.
+    Returns True if successful.
+    """
+    try:
+        issue_type = issue.fields.issuetype.name
+        current_status = issue.fields.status.name
+
+        if issue_type not in workflow_matrix:
+            print(f"  Warning: {issue.key} - issue type '{issue_type}' not in workflow matrix")
+            return False
+
+        path = find_path_to_target(workflow_matrix, issue_type, current_status, target_status)
+
+        if not path:
+            print(f"  Warning: {issue.key} - no path from '{current_status}' to '{target_status}'")
+            return False
+
+        # Follow the path, transitioning through each status
+        for i in range(len(path) - 1):
+            from_status = path[i]
+            to_status = path[i + 1]
+
+            transition_name = workflow_matrix[issue_type][from_status][to_status]
+
+            # Find transition ID by name
+            transitions = jira.transitions(issue)
+            transition_id = None
+            for t in transitions:
+                if t['name'] == transition_name:
+                    transition_id = t['id']
+                    break
+
+            if transition_id:
+                jira.transition_issue(issue, transition_id)
+                print(f"  {issue.key}: {from_status} -> {to_status}")
+                # Refresh issue to get updated status
+                issue = jira.issue(issue.key)
+            else:
+                print(f"  Warning: {issue.key} - transition '{transition_name}' not available from {from_status}")
+                return False
+
+        return True
+    except Exception as e:
+        print(f"  Warning: {issue.key} - error changing status: {e}")
+        return False
+
+
+def change_assignee(issue: Issue) -> bool:
+    """
+    Change issue assignee based on Reporter.
+    If Reporter in JIRA_QA_TESTERS, assign to Reporter.
+    Otherwise assign to JIRA_QA_LEAD.
+    """
+    try:
+        reporter = issue.fields.reporter.name if issue.fields.reporter else None
+
+        if not reporter:
+            print(f"  Warning: {issue.key} - no reporter found")
+            return False
+
+        if reporter in JIRA_QA_TESTERS:
+            assignee = reporter
+        else:
+            assignee = JIRA_QA_LEAD
+
+        issue.update(assignee={"name": assignee})
+        print(f"  {issue.key} assigned to {assignee}")
+        return True
+    except Exception as e:
+        print(f"  Warning: {issue.key} - error changing assignee: {e}")
+        return False
 
 
 # ── Telegram ─────────────────────────────────────────────────────────────────
@@ -138,7 +199,7 @@ def send_telegram(message: str) -> None:
 
 
 # ── Main ─────────────────────────────────────────────────────────────────────
-async def main() -> None:
+def main() -> None:
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
     parser = argparse.ArgumentParser(description="Send release notification to Telegram")
@@ -161,24 +222,32 @@ async def main() -> None:
         return
     print(f"Tickets found: {tickets}")
 
-    from playwright.async_api import async_playwright
+    print("\nFetching issues...")
+    issues = find_issues(tickets)
+    if not issues:
+        print("No issues found.")
+        return
 
-    async with async_playwright() as p:
-        USERDATA_DIR.mkdir(parents=True, exist_ok=True)
-        ctx = await p.chromium.launch_persistent_context(
-            user_data_dir=str(USERDATA_DIR),
-            headless=False,
-            args=["--start-maximized"],
-        )
-        print("\nScraping titles...")
-        ticket_titles = await scrape_titles(ctx, tickets)
-        await ctx.close()
+    print("\nChanging issue statuses...")
+    workflow_matrix = load_workflow_matrix()
+    for issue in issues:
+        issue_type = issue.fields.issuetype.name
+        if issue_type == "Bug":
+            change_issue_status(issue, workflow_matrix, "DEV Ready For Testing")
+        else:
+            change_issue_status(issue, workflow_matrix, "Testing")
 
+    print("\nChanging assignees...")
+    for issue in issues:
+        change_assignee(issue)
+
+    print("\nBuilding Telegram message...")
     lines = [f"\U0001f4cb На {ENVIRONMENT} {RELEASE}-rc{RC}:"]
-    for ticket, title in ticket_titles.items():
-        url = f"{JIRA_BASE}/{ticket}"
+    for issue in issues:
+        url = f"{JIRA_BASE}/{issue.key}"
+        title = issue.fields.summary
         safe_title = title.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
-        lines.append(f'<a href="{url}">{ticket} - {safe_title}</a>')
+        lines.append(f'<a href="{url}">{issue.key} - {safe_title}</a>')
     message = "\n\n".join(lines)
 
     print("\n--- Telegram message ---")
@@ -189,4 +258,4 @@ async def main() -> None:
 
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    main()
