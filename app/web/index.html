@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<title>Release Notify</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header>
+  <div class="brand"><span class="logo">📋</span> Release Notify</div>
+  <button class="icon-btn" id="btn-settings" title="Настройки">⚙</button>
+</header>
+
+<nav class="steps" id="steps-bar">
+  <div class="step active" id="step-1"><span class="n">1</span><span class="t">Ввод</span></div>
+  <div class="step-line"></div>
+  <div class="step" id="step-2"><span class="n">2</span><span class="t">Проверка</span></div>
+  <div class="step-line"></div>
+  <div class="step" id="step-3"><span class="n">3</span><span class="t">Результат</span></div>
+</nav>
+
+<!-- Шаг 1: Ввод -->
+<main id="screen-input">
+  <div class="banner hidden" id="input-banner"></div>
+  <div class="row3">
+    <label class="field">Окружение
+      <input id="env" list="env-list" value="QA">
+      <datalist id="env-list"><option>QA</option><option>STAGE</option><option>PROD</option></datalist>
+    </label>
+    <label class="field">Релиз<input id="release" placeholder="26.1.0"></label>
+    <label class="field">RC<input id="rc" placeholder="7"></label>
+  </div>
+  <label class="field grow">Коммиты
+    <textarea id="commits" placeholder="abc12345(BugFix DEV-12345 Fix something)&#10;def67890(Feature DEV-67890 Add thing)"></textarea>
+  </label>
+  <button class="btn primary" id="btn-find">🔍 Найти тикеты</button>
+</main>
+
+<!-- Шаг 2: Проверка -->
+<main id="screen-review" hidden>
+  <div class="card">
+    <div class="card-h"><span>Тикеты · <span id="ticket-count">0</span></span>
+      <span class="ok" id="selected-count"></span></div>
+    <div id="ticket-list"></div>
+  </div>
+  <div class="card">
+    <div class="card-h">Сообщение в Telegram</div>
+    <div class="msg-preview" id="msg-preview"></div>
+  </div>
+  <div class="row-between">
+    <button class="btn ghost" id="btn-back-1">← Назад</button>
+    <button class="btn primary" id="btn-execute">▶ Выполнить</button>
+  </div>
+</main>
+
+<!-- Шаг 3: Результат -->
+<main id="screen-result" hidden>
+  <div class="card grow">
+    <div class="card-h">Лог выполнения</div>
+    <pre id="log"></pre>
+  </div>
+  <div id="result-summary"></div>
+  <div class="row-between">
+    <button class="btn ghost" id="btn-copy-log">Копировать лог</button>
+    <button class="btn ghost hidden" id="btn-resend">↻ Повторить отправку</button>
+    <button class="btn primary" id="btn-new-run">Новый прогон</button>
+  </div>
+</main>
+
+<!-- Настройки -->
+<main id="screen-settings" hidden>
+  <div class="banner hidden" id="settings-banner"></div>
+  <section>
+    <h3>✈ Telegram <span class="badge hidden" id="tg-badge"></span></h3>
+    <div class="grid2">
+      <label class="field">Bot Token<input id="s-bot-token" type="password"></label>
+      <label class="field">Chat ID<input id="s-chat-id"></label>
+      <label class="field full">Прокси (опционально)
+        <input id="s-proxy" placeholder="socks5://user:pass@host:1080">
+        <small>SOCKS5 или HTTP, пусто = без прокси</small></label>
+    </div>
+    <button class="btn ghost" id="btn-test-tg">Проверить: отправить тест в чат</button>
+  </section>
+  <section>
+    <h3>🔧 JIRA <span class="badge hidden" id="jira-badge"></span></h3>
+    <div class="grid2">
+      <label class="field full">Хост<input id="s-jira-host" placeholder="jira.yourcompany.com"><small>без https://</small></label>
+      <label class="field">Логин<input id="s-jira-user"></label>
+      <label class="field">Пароль<input id="s-jira-pass" type="password"></label>
+    </div>
+    <button class="btn ghost" id="btn-test-jira">Проверить подключение</button>
+  </section>
+  <section>
+    <h3>👥 Команда QA</h3>
+    <div class="grid2">
+      <label class="field full">Тестировщики<input id="s-testers" placeholder="user1, user2">
+        <small>логины JIRA через запятую — если репортер в списке, тикет назначается ему</small></label>
+      <label class="field full">QA-лид<input id="s-lead"><small>получает тикеты остальных репортеров</small></label>
+    </div>
+  </section>
+  <div class="row-between">
+    <button class="btn ghost" id="btn-settings-cancel">Отмена</button>
+    <button class="btn primary" id="btn-settings-save">Сохранить</button>
+  </div>
+</main>
+
+<script src="app.js"></script>
+</body>
+</html>
