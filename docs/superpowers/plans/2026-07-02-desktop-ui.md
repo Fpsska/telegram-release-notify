@@ -1221,15 +1221,17 @@ from core.tickets import extract_jira_tickets
 
 class Api:
     def __init__(self):
-        self.window = None          # проставляется в main.py после create_window
+        # ВАЖНО: атрибут приватный — pywebview рефлексит публичные атрибуты js_api,
+        # и ссылка на Window ломает .NET interop (Rectangle.op_Equality TypeError)
+        self._window = None         # проставляется в main.py после create_window
         self._jira = None
         self._issues = {}           # key -> Issue
         self._last_message = None   # для «Повторить отправку»
 
     # ── лог в UI ──
     def _log(self, line: str) -> None:
-        if self.window:
-            self.window.evaluate_js(f"appendLog({json.dumps(line)})")
+        if self._window:
+            self._window.evaluate_js(f"appendLog({json.dumps(line)})")
 
     # ── настройки ──
     def get_settings(self) -> dict:
@@ -1354,7 +1356,7 @@ def main() -> None:
         width=760, height=640, min_size=(640, 560),
         background_color="#1a1f27",
     )
-    api.window = window
+    api._window = window
     webview.start()
 
 
