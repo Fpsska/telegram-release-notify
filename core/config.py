@@ -54,14 +54,18 @@ def load_config(path: Path | None = None, load_env_file: bool = True) -> Config:
 
     cfg = Config()
     for attr, env_key in _ENV_MAP.items():
-        value = data.get(attr) or os.environ.get(env_key, "")
-        setattr(cfg, attr, value.strip() if isinstance(value, str) else "")
+        json_value = data.get(attr)
+        if json_value is not None and not isinstance(json_value, str):
+            json_value = str(json_value)
+        value = json_value or os.environ.get(env_key, "")
+        setattr(cfg, attr, value.strip())
 
     testers = data.get("qa_testers")
-    if not isinstance(testers, list):
+    if isinstance(testers, list):
+        cfg.qa_testers = [str(u).strip() for u in testers if str(u).strip()]
+    else:
         raw = os.environ.get("JIRA_QA_TESTERS", "")
-        testers = [u.strip() for u in raw.split(",") if u.strip()]
-    cfg.qa_testers = testers
+        cfg.qa_testers = [u.strip() for u in raw.split(",") if u.strip()]
     return cfg
 
 

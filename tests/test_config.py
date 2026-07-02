@@ -35,6 +35,28 @@ def test_corrupt_settings_file_ignored(tmp_path, monkeypatch):
     assert cfg.bot_token == "env-token"
 
 
+def test_numeric_chat_id_coerced_to_string(tmp_path, monkeypatch):
+    monkeypatch.delenv("CHAT_ID", raising=False)
+    p = tmp_path / "settings.json"
+    p.write_text(json.dumps({"chat_id": -1001234567890, "bot_token": "abc"}),
+                 encoding="utf-8")
+
+    cfg = load_config(path=p, load_env_file=False)
+
+    assert cfg.chat_id == "-1001234567890"
+    assert cfg.bot_token == "abc"
+
+
+def test_qa_testers_from_json_are_stripped(tmp_path):
+    p = tmp_path / "settings.json"
+    p.write_text(json.dumps({"qa_testers": ["alice ", " bob", ""]}),
+                 encoding="utf-8")
+
+    cfg = load_config(path=p, load_env_file=False)
+
+    assert cfg.qa_testers == ["alice", "bob"]
+
+
 def test_save_and_load_roundtrip(tmp_path):
     p = tmp_path / "sub" / "settings.json"
     cfg = Config(bot_token="t", chat_id="c", jira_host="h",
