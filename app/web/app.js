@@ -1,5 +1,5 @@
 const $ = (id) => document.getElementById(id);
-const state = { tickets: [], errors: {}, env: '', release: '', rc: '', telegramFailed: false };
+const state = { tickets: [], errors: {}, env: '', release: '', rc: '' };
 
 // ── навигация ────────────────────────────────────────────────────────────────
 function goStep(n) {
@@ -115,18 +115,22 @@ function appendLog(line) {          // зовётся из Python через eva
 async function onExecute() {
   const keys = state.tickets.filter(t => t.selected).map(t => t.key);
   goStep(3);
-  $('log').textContent = '';
-  $('result-summary').innerHTML = '';
-  $('btn-resend').classList.add('hidden');
-  const res = await pywebview.api.execute(keys, state.env, state.release, state.rc);
-  const parts = res.results.map(r =>
-    r.ok ? `✓ ${esc(r.key)}` : `<span class="warn">⚠ ${esc(r.key)}: ${esc(r.detail)}</span>`);
-  parts.push(res.telegram_ok
-    ? '✓ Сообщение отправлено в Telegram'
-    : `<span class="warn">⚠ Telegram: ${esc(res.telegram_error)}</span>`);
-  $('result-summary').innerHTML = parts.join('<br>');
-  state.telegramFailed = !res.telegram_ok;
-  $('btn-resend').classList.toggle('hidden', res.telegram_ok);
+  try {
+    $('log').textContent = '';
+    $('result-summary').innerHTML = '';
+    $('btn-resend').classList.add('hidden');
+    const res = await pywebview.api.execute(keys, state.env, state.release, state.rc);
+    const parts = res.results.map(r =>
+      r.ok ? `✓ ${esc(r.key)}` : `<span class="warn">⚠ ${esc(r.key)}: ${esc(r.detail)}</span>`);
+    parts.push(res.telegram_ok
+      ? '✓ Сообщение отправлено в Telegram'
+      : `<span class="warn">⚠ Telegram: ${esc(res.telegram_error)}</span>`);
+    $('result-summary').innerHTML = parts.join('<br>');
+    $('btn-resend').classList.toggle('hidden', res.telegram_ok);
+  } catch (e) {
+    $('result-summary').innerHTML = `<span class="warn">⚠ Ошибка выполнения: ${esc(String(e))}</span>`;
+    appendLog('⚠ Ошибка выполнения: ' + String(e));
+  }
 }
 
 async function onResend() {
@@ -173,15 +177,27 @@ async function onSaveSettings() {
 }
 
 async function onTestTelegram() {
-  await pywebview.api.save_settings(collectSettingsForm());
-  const res = await pywebview.api.test_telegram();
-  setBadge('tg-badge', res.ok, res.ok ? '✓ подключено' : '✗ ' + res.error);
+  const btn = $('btn-test-tg');
+  btn.disabled = true;
+  try {
+    await pywebview.api.save_settings(collectSettingsForm());
+    const res = await pywebview.api.test_telegram();
+    setBadge('tg-badge', res.ok, res.ok ? '✓ подключено' : '✗ ' + res.error);
+  } finally {
+    btn.disabled = false;
+  }
 }
 
 async function onTestJira() {
-  await pywebview.api.save_settings(collectSettingsForm());
-  const res = await pywebview.api.test_jira();
-  setBadge('jira-badge', res.ok, res.ok ? '✓ подключено' : '✗ ' + res.error);
+  const btn = $('btn-test-jira');
+  btn.disabled = true;
+  try {
+    await pywebview.api.save_settings(collectSettingsForm());
+    const res = await pywebview.api.test_jira();
+    setBadge('jira-badge', res.ok, res.ok ? '✓ подключено' : '✗ ' + res.error);
+  } finally {
+    btn.disabled = false;
+  }
 }
 
 // ── init ─────────────────────────────────────────────────────────────────────

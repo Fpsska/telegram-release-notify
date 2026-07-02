@@ -34,6 +34,7 @@ main {
   flex: 1; overflow-y: auto; padding: 14px 24px 20px;
   display: flex; flex-direction: column; gap: 10px;
 }
+main[hidden] { display: none !important; }
 .grow { flex: 1; display: flex; flex-direction: column; }
 .row3 { display: flex; gap: 10px; }
 .row3 .field:first-child { flex: 1; }
