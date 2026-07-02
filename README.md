@@ -16,7 +16,7 @@
 
 ## Требования
 
-- Python 3.11+
+- Python 3.10+
 - Доступ к JIRA API (username/password)
 - Telegram бот с токеном
 

@@ -20,12 +20,9 @@ class Api:
             self._window.evaluate_js(f"appendLog({json.dumps(line)})")
 
     # ── настройки ──
-    def get_settings(self) -> dict:
-        cfg = load_config()
-        return {**cfg.__dict__, "valid": cfg.is_valid()}
-
-    def save_settings(self, data: dict) -> dict:
-        cfg = Config(
+    @staticmethod
+    def _config_from(data: dict) -> Config:
+        return Config(
             bot_token=data.get("bot_token", ""),
             chat_id=data.get("chat_id", ""),
             jira_host=data.get("jira_host", ""),
@@ -35,16 +32,23 @@ class Api:
             qa_lead=data.get("qa_lead", ""),
             telegram_proxy=data.get("telegram_proxy", ""),
         )
+
+    def get_settings(self) -> dict:
+        cfg = load_config()
+        return {**cfg.__dict__, "valid": cfg.is_valid()}
+
+    def save_settings(self, data: dict) -> dict:
+        cfg = self._config_from(data)
         save_config(cfg)
         return {"valid": cfg.is_valid()}
 
-    def test_telegram(self) -> dict:
-        cfg = load_config()
+    def test_telegram(self, data: dict) -> dict:
+        cfg = self._config_from(data)
         ok, error = send_telegram(cfg, "✅ Release Notify: тестовое сообщение")
         return {"ok": ok, "error": error}
 
-    def test_jira(self) -> dict:
-        cfg = load_config()
+    def test_jira(self, data: dict) -> dict:
+        cfg = self._config_from(data)
         try:
             jira = jira_client.connect(cfg)
             jira.myself()

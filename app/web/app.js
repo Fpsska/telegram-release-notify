@@ -17,6 +17,8 @@ function showSettings(bannerText) {
   ['input', 'review', 'result'].forEach(n => $('screen-' + n).hidden = true);
   $('screen-settings').hidden = false;
   $('steps-bar').style.visibility = 'hidden';
+  $('tg-badge').classList.add('hidden');
+  $('jira-badge').classList.add('hidden');
   const b = $('settings-banner');
   b.classList.toggle('hidden', !bannerText);
   if (bannerText) b.textContent = bannerText;
@@ -58,6 +60,8 @@ async function onFind() {
     renderTickets();
     updatePreview();
     goStep(2);
+  } catch (e) {
+    showBanner('input-banner', 'Ошибка: ' + esc(String(e)));
   } finally {
     btn.disabled = false; btn.textContent = '🔍 Найти тикеты';
   }
@@ -138,6 +142,7 @@ async function onResend() {
   const res = await pywebview.api.resend_telegram();
   $('btn-resend').disabled = false;
   appendLog(res.ok ? '✓ Отправлено со второй попытки' : '⚠ Снова ошибка: ' + res.error);
+  if (res.ok) $('result-summary').innerHTML += '<br>✓ Отправлено со второй попытки';
   $('btn-resend').classList.toggle('hidden', res.ok);
 }
 
@@ -180,8 +185,7 @@ async function onTestTelegram() {
   const btn = $('btn-test-tg');
   btn.disabled = true;
   try {
-    await pywebview.api.save_settings(collectSettingsForm());
-    const res = await pywebview.api.test_telegram();
+    const res = await pywebview.api.test_telegram(collectSettingsForm());
     setBadge('tg-badge', res.ok, res.ok ? '✓ подключено' : '✗ ' + res.error);
   } finally {
     btn.disabled = false;
@@ -192,8 +196,7 @@ async function onTestJira() {
   const btn = $('btn-test-jira');
   btn.disabled = true;
   try {
-    await pywebview.api.save_settings(collectSettingsForm());
-    const res = await pywebview.api.test_jira();
+    const res = await pywebview.api.test_jira(collectSettingsForm());
     setBadge('jira-badge', res.ok, res.ok ? '✓ подключено' : '✗ ' + res.error);
   } finally {
     btn.disabled = false;
@@ -208,11 +211,15 @@ async function init() {
   $('btn-new-run').onclick = () => { $('commits').value = ''; goStep(1); };
   $('btn-copy-log').onclick = () => navigator.clipboard.writeText($('log').textContent);
   $('btn-resend').onclick = onResend;
-  $('btn-settings').onclick = () => showSettings(null);
-  $('btn-settings-cancel').onclick = () => goStep(1);
+  $('btn-settings').onclick = async () => { fillSettingsForm(await pywebview.api.get_settings()); showSettings(null); };
+  $('btn-settings-cancel').onclick = async () => { fillSettingsForm(await pywebview.api.get_settings()); goStep(1); };
   $('btn-settings-save').onclick = onSaveSettings;
   $('btn-test-tg').onclick = onTestTelegram;
   $('btn-test-jira').onclick = onTestJira;
+  document.querySelectorAll('.eye').forEach(b => b.onclick = () => {
+    const i = $(b.dataset.target);
+    i.type = i.type === 'password' ? 'text' : 'password';
+  });
 
   const s = await pywebview.api.get_settings();
   fillSettingsForm(s);
