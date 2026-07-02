@@ -6,7 +6,7 @@
 
 **Architecture:** Логика выносится из `release_notify.py` в пакет `core/` (config, tickets, jira_client, telegram) без сайд-эффектов при импорте. CLI (`release_notify.py`) и UI (`app/`) зовут одни функции. UI — pywebview-окно с HTML/CSS/JS фронтендом (`app/web/`), мост через `js_api`.
 
-**Tech Stack:** Python 3.10+, jira==3.13.0, python-dotenv, requests[socks], pywebview, pytest, PyInstaller. Спека: `docs/superpowers/specs/2026-07-02-desktop-ui-design.md`.
+**Tech Stack:** Python 3.10+, jira==3.10.5, python-dotenv, requests[socks], pywebview, pytest, PyInstaller. Спека: `docs/superpowers/specs/2026-07-02-desktop-ui-design.md`.
 
 ---
 
@@ -50,7 +50,7 @@ git mv workflow_matrix.json core/workflow_matrix.json
 `requirements.txt` (полное содержимое):
 
 ```
-jira==3.13.0
+jira==3.10.5
 python-dotenv==1.2.1
 requests[socks]==2.32.5
 pywebview==5.4
