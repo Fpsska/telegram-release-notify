@@ -33,8 +33,9 @@ def find_issues(jira: JIRA, tickets: list[str],
         try:
             issues.append(jira.issue(ticket))
         except JIRAError as e:
-            errors[ticket] = f"JIRA {e.status_code}"
-            log(f"Error getting issue {ticket}: {e.status_code}")
+            detail = e.status_code or e.text or "error"
+            errors[ticket] = f"JIRA {detail}"
+            log(f"Error getting issue {ticket}: {detail}")
         except Exception as e:
             errors[ticket] = str(e)
             log(f"Unexpected error for {ticket}: {e}")
@@ -111,9 +112,12 @@ def pick_assignee(issue: Issue, qa_testers: list[str], qa_lead: str) -> str | No
 def change_assignee(issue: Issue, qa_testers: list[str], qa_lead: str,
                     log: Log = print) -> bool:
     try:
+        if not issue.fields.reporter:
+            log(f"  Warning: {issue.key} - no reporter found")
+            return False
         assignee = pick_assignee(issue, qa_testers, qa_lead)
         if not assignee:
-            log(f"  Warning: {issue.key} - no reporter found")
+            log(f"  Warning: {issue.key} - QA lead not configured")
             return False
         issue.update(assignee={"name": assignee})
         log(f"  {issue.key} assigned to {assignee}")

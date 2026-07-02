@@ -1,6 +1,6 @@
 from unittest.mock import MagicMock
 
-from core.jira_client import find_path_to_target, pick_assignee
+from core.jira_client import change_assignee, find_path_to_target, pick_assignee
 
 MATRIX = {
     "Bug": {
@@ -48,3 +48,11 @@ def test_pick_assignee_no_reporter():
     issue = MagicMock()
     issue.fields.reporter = None
     assert pick_assignee(issue, ["tester1"], "lead") is None
+
+
+def test_change_assignee_empty_lead_logs_config_warning():
+    issue = _issue_with_reporter("someone")
+    lines = []
+    assert change_assignee(issue, ["t1"], "", log=lines.append) is False
+    assert "QA lead not configured" in lines[0]
+    issue.update.assert_not_called()
