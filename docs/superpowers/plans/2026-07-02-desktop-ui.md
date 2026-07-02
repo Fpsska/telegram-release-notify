@@ -963,6 +963,7 @@ pre#log {
 }
 .banner a { color: #58a6ff; cursor: pointer; }
 .hidden { display: none !important; }
+main[hidden] { display: none !important; }  /* main{display:flex} перебивает UA-правило [hidden] */
 
 section { display: flex; flex-direction: column; gap: 10px; padding-bottom: 14px;
   border-bottom: 1px solid #2d333b; }
@@ -1195,6 +1196,8 @@ window.addEventListener('pywebviewready', init);
 git add app/web
 git commit -m "feat: wizard frontend (3 steps + settings, dark theme)"
 ```
+
+> **Поправки по ревью (уже учтены в коде):** onExecute обёрнут в try/catch (ошибка моста → #result-summary + лог); onTestTelegram/onTestJira дизейблят кнопку на время await (даблклик слал два реальных сообщения); state.telegramFailed удалён как мёртвый.
 
 ---
 
