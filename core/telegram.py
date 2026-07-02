@@ -36,3 +36,5 @@ def send_telegram(cfg: Config, message: str) -> tuple[bool, str]:
         return False, "Cannot reach api.telegram.org (network/proxy issue)."
     except requests.exceptions.Timeout:
         return False, "Telegram request timed out."
+    except requests.exceptions.RequestException as e:
+        return False, f"Telegram request failed: {e}"
