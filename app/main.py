@@ -13,7 +13,7 @@ def main() -> None:
         width=760, height=640, min_size=(640, 560),
         background_color="#1a1f27",
     )
-    api.window = window
+    api._window = window
     webview.start()
 
 

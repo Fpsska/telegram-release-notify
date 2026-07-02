@@ -8,15 +8,16 @@ from core.tickets import extract_jira_tickets
 
 class Api:
     def __init__(self):
-        self.window = None          # проставляется в main.py после create_window
+        # underscore-имя: pywebview не рефлексит приватные атрибуты js_api
+        self._window = None         # проставляется в main.py после create_window
         self._jira = None
         self._issues = {}           # key -> Issue
         self._last_message = None   # для «Повторить отправку»
 
     # ── лог в UI ──
     def _log(self, line: str) -> None:
-        if self.window:
-            self.window.evaluate_js(f"appendLog({json.dumps(line)})")
+        if self._window:
+            self._window.evaluate_js(f"appendLog({json.dumps(line)})")
 
     # ── настройки ──
     def get_settings(self) -> dict:
