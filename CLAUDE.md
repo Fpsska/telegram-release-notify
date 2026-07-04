@@ -36,10 +36,12 @@ Tests:
 python -m pytest
 ```
 
-Build (.exe via PyInstaller):
+Build via PyInstaller (`dist/ReleaseNotify.exe` on Windows, `dist/ReleaseNotify.app` on macOS; no cross-compilation — build on the target OS):
 ```bash
 python -m PyInstaller build.spec --noconfirm
 ```
+
+CI (`.github/workflows/build.yml`) runs tests and builds Windows + macOS (arm64, Intel) on every push to `main`; pushing a `v*` tag publishes the builds to GitHub Releases. macOS `.app` is unsigned — first launch requires right-click → Open (Gatekeeper).
 
 ## Architecture
 
@@ -53,7 +55,7 @@ python -m PyInstaller build.spec --noconfirm
 
 `app/` — desktop UI:
 
-- `main.py` — creates the pywebview window (`app/web/index.html`) with `js_api=Api()`.
+- `main.py` — creates the pywebview window (`app/web/index.html`) with `js_api=Api()`. pywebview picks the backend per platform (EdgeChromium/WebView2 on Windows, Cocoa/WebKit on macOS); `build.spec` lists the matching backend in `hiddenimports` since PyInstaller can't see that dynamic import.
 - `api.py` — `Api` class, the js_api bridge exposed to the frontend (`get_settings`, `save_settings`, `test_telegram`, `test_jira`, `parse_and_fetch`, `execute`, `resend_telegram`). **Important:** the window reference is stored as `self._window` (leading underscore) and assigned *after* `create_window()` in `main.py`. pywebview reflects only public (non-underscore) attributes of the js_api object to build the JS bridge — a public `window`/similar attribute here would break that reflection and expose/shadow unintended methods to the frontend. Keep any non-API internal state on underscore-prefixed attributes.
 - `web/` — frontend (`index.html`, `app.js`, `style.css`): a 3-step wizard (Ввод → Проверка → Результат) plus a Settings screen (Telegram / JIRA / QA team), talking to `Api` via pywebview's js_api.
 

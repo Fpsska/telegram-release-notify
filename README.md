@@ -22,9 +22,22 @@
 
 ## Desktop app
 
-Скачай `ReleaseNotify.exe` (или собери: см. Building) и запусти.
+Скачай сборку из [Releases](../../releases) (или собери: см. Building) и запусти:
+
+- **Windows**: `ReleaseNotify-windows.exe`
+- **macOS**: `ReleaseNotify-macos-arm64.zip` (Apple Silicon) или `ReleaseNotify-macos-intel.zip` (Intel) — распакуй и запусти `ReleaseNotify.app`
+
 При первом запуске заполни настройки (⚙): Telegram, JIRA, команда QA.
-Настройки хранятся в `%APPDATA%\release-notify\settings.json`.
+Настройки хранятся в `%APPDATA%\release-notify\settings.json` (Windows) или `~/.config/release-notify/settings.json` (macOS).
+
+### macOS: первый запуск
+
+Приложение не подписано, Gatekeeper заблокирует обычный двойной клик. Один раз:
+правый клик по `ReleaseNotify.app` → «Открыть» → «Открыть» в диалоге. Либо в терминале:
+
+```bash
+xattr -d com.apple.quarantine /путь/до/ReleaseNotify.app
+```
 
 ## CLI
 
@@ -75,7 +88,16 @@ python release_notify.py QA 26.1.0 7 \
 ```bash
 pip install -r requirements-dev.txt
 python -m PyInstaller build.spec --noconfirm
-# результат: dist/ReleaseNotify.exe
+# Windows: dist/ReleaseNotify.exe
+# macOS:   dist/ReleaseNotify.app
+```
+
+PyInstaller не кросс-компилирует: сборка под Windows делается на Windows, под macOS — на macOS.
+
+CI (`.github/workflows/build.yml`) собирает все три варианта (Windows, macOS arm64, macOS Intel) на каждый пуш в `main`; при пуше тега `v*` публикует их в GitHub Releases:
+
+```bash
+git tag v1.1.0 && git push origin v1.1.0
 ```
 
 ## Development
@@ -113,7 +135,7 @@ DEV-67890 - Update user profile page layout
 │   ├── api.py                 # js_api мост между UI и core/
 │   └── web/                   # HTML/CSS/JS мастера (3 шага + настройки)
 ├── tests/                     # pytest
-├── build.spec                  # PyInstaller-сборка ReleaseNotify.exe
+├── build.spec                  # PyInstaller-сборка (.exe на Windows, .app на macOS)
 ├── requirements.txt             # рантайм-зависимости (CLI + UI)
 ├── requirements-dev.txt         # + pytest, pyinstaller
 ├── .env.example                 # шаблон .env (fallback-конфиг)

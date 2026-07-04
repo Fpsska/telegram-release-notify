@@ -1,4 +1,14 @@
 # -*- mode: python ; coding: utf-8 -*-
+import sys
+
+IS_MACOS = sys.platform == "darwin"
+
+# pywebview выбирает бэкенд по платформе; PyInstaller не видит этот динамический
+# импорт, поэтому нужный бэкенд перечисляем явно.
+hiddenimports = (
+    ["webview.platforms.cocoa"] if IS_MACOS
+    else ["webview.platforms.edgechromium"]
+)
 
 a = Analysis(
     ['app/main.py'],
@@ -8,7 +18,7 @@ a = Analysis(
         ('core/workflow_matrix.json', 'core'),
         ('app/web', 'app/web'),
     ],
-    hiddenimports=['webview.platforms.edgechromium'],
+    hiddenimports=hiddenimports,
     excludes=[],
     noarchive=False,
 )
@@ -23,3 +33,14 @@ exe = EXE(
     console=False,
     upx=True,
 )
+
+if IS_MACOS:
+    app = BUNDLE(
+        exe,
+        name='ReleaseNotify.app',
+        icon=None,
+        bundle_identifier='com.release-notify.app',
+        info_plist={
+            'NSHighResolutionCapable': True,
+        },
+    )
