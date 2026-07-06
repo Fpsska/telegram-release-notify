@@ -4,6 +4,7 @@ import sys
 from core.config import load_config
 from core.tickets import extract_jira_tickets
 from core import jira_client
+from core import gitlab_client
 from core.telegram import build_message, send_telegram
 
 
@@ -14,8 +15,11 @@ def main() -> None:
     parser.add_argument("environment", help="Environment, e.g. QA")
     parser.add_argument("release", help="Release version, e.g. 26.1.0")
     parser.add_argument("rc", help="RC number, e.g. 7")
-    parser.add_argument("commits", nargs="+",
+    parser.add_argument("commits", nargs="*",
                         help='Commit strings, e.g. "abc123(BugFix DEV-123 Fix something)"')
+    parser.add_argument("--tag",
+                        help="GitLab release tag, e.g. 26.1.0-rc7 "
+                             "(pulls commits between it and the previous tag)")
     args = parser.parse_args()
 
     cfg = load_config()
@@ -25,7 +29,26 @@ def main() -> None:
 
     print(f"Release: {args.release}-rc{args.rc}")
 
-    tickets = extract_jira_tickets(args.commits)
+    if args.tag:
+        if not cfg.gitlab_ready():
+            print("GitLab not configured: set gitlab_host/token/project.")
+            sys.exit(1)
+        try:
+            from_tag, to_tag, commits = gitlab_client.commits_for_tag(cfg, args.tag)
+        except ValueError as e:
+            print(str(e))
+            sys.exit(1)
+        except Exception as e:
+            print(f"GitLab error: {e}")
+            sys.exit(1)
+        print(f"GitLab commits: {from_tag} -> {to_tag} ({len(commits)} commits)")
+    elif args.commits:
+        commits = args.commits
+    else:
+        print("Provide commit strings or --tag <release-tag>.")
+        sys.exit(1)
+
+    tickets = extract_jira_tickets(commits)
     if not tickets:
         print("No Jira tickets found in commits.")
         return

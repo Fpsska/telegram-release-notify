@@ -54,7 +54,8 @@ python release_notify.py QA 26.1.0 7 \
 | `environment` | Название среды, на которую деплоится релиз (например, `QA`, `PROD`) |
 | `release`     | Версия релиза (например, `26.1.0`) |
 | `rc`          | Номер release candidate |
-| `commit...`   | Один или несколько коммитов в формате `hash(Type TICKET-123 Description)` |
+| `commit...`   | Ноль или несколько коммитов в формате `hash(Type TICKET-123 Description)` |
+| `--tag`       | Тег релиза в GitLab (например, `26.1.0-rc7`) — вместо коммитов; тянет коммиты между тегом и предыдущим |
 
 Пример запуска скрипта:
 
@@ -64,8 +65,14 @@ python release_notify.py QA 26.1.0 7 \
   "def67890(BugFix DEV-67890 Fix something else)"
 ```
 
+Или взять коммиты из GitLab по тегу (нужны `GITLAB_HOST`/`GITLAB_TOKEN`/`GITLAB_PROJECT`; берутся коммиты между указанным тегом и предыдущим):
+
+```bash
+python release_notify.py QA 26.1.0 7 --tag 26.1.0-rc7
+```
+
 Скрипт:
-1. Извлечёт тикеты DEV-12345 и DEV-67890
+1. Извлечёт тикеты DEV-12345 и DEV-67890 (из переданных коммитов или из GitLab по тегу)
 2. Получит их информацию через JIRA API
 3. Поменяет статусы и assignee
 4. Отправит сообщение в Telegram
@@ -82,6 +89,9 @@ python release_notify.py QA 26.1.0 7 \
 | `JIRA_QA_TESTERS`  | Usernames тестировщиков через запятую (например, `user1,user2,user3`) |
 | `JIRA_QA_LEAD`     | Username QA lead для назначения если reporter не в списке тестировщиков |
 | `TELEGRAM_PROXY`   | Прокси для запросов к Telegram API (необязательно). Формат: `socks5://user:pass@host:port` или `http://user:pass@host:port` |
+| `GITLAB_HOST`      | Хост GitLab (например, `gitlab.yourcompany.com`) — включает режим `--tag` / «Из GitLab по тегу» (необязательно) |
+| `GITLAB_TOKEN`     | Access-токен GitLab (`PRIVATE-TOKEN`) |
+| `GITLAB_PROJECT`   | Путь или числовой id проекта GitLab, например `group/repo` |
 
 ## Building
 
@@ -126,6 +136,7 @@ DEV-67890 - Update user profile page layout
 ├── core/
 │   ├── config.py            # Config, settings.json (%APPDATA%) / .env fallback
 │   ├── tickets.py            # извлечение тикетов из коммитов
+│   ├── gitlab_client.py      # GitLab API: теги, previous_tag (semver), compare
 │   ├── jira_client.py        # JIRA API, BFS по workflow_matrix, статусы, исполнители
 │   ├── telegram.py           # сборка и отправка сообщения в Telegram
 │   ├── resources.py          # пути к ресурсам (исходники / PyInstaller)

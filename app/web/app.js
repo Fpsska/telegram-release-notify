@@ -19,6 +19,7 @@ function showSettings(bannerText) {
   $('steps-bar').style.visibility = 'hidden';
   $('tg-badge').classList.add('hidden');
   $('jira-badge').classList.add('hidden');
+  $('gitlab-badge').classList.add('hidden');
   const b = $('settings-banner');
   b.classList.toggle('hidden', !bannerText);
   if (bannerText) b.textContent = bannerText;
@@ -33,27 +34,79 @@ function showBanner(id, text) {
 const esc = (s) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
 // ── шаг 1 → 2 ────────────────────────────────────────────────────────────────
+function updateInputMode() {
+  const gitlabMode = $('mode-gitlab').checked;
+  $('block-gitlab').classList.toggle('hidden', !gitlabMode);
+  $('block-manual').classList.toggle('hidden', gitlabMode);
+  if (gitlabMode && !$('gitlab-tags').children.length) loadGitlabTags();
+}
+
+const TAG_RE = /^(\d+\.\d+\.\d+)-rc(\d+)$/;
+
+async function loadGitlabTags() {
+  const dl = $('gitlab-tags'), hint = $('gitlab-hint');
+  hint.textContent = 'Загружаю теги…';
+  try {
+    const res = await pywebview.api.get_gitlab_tags();
+    if (res.error === 'gitlab_config') { showSettings('GitLab не настроен — заполни host/token/project.'); return; }
+    if (res.error) { hint.textContent = 'Ошибка загрузки тегов: ' + (res.detail || res.error); return; }
+    const tags = (res.tags || []).slice().sort((a, b) => {
+      const pa = a.match(TAG_RE), pb = b.match(TAG_RE);
+      if (!pa && !pb) return 0;
+      if (!pa) return 1;
+      if (!pb) return -1;
+      return (pb[1].split('.').concat(pb[2]).map(Number))
+        .reduce((d, n, i) => d || n - Number(pa[1].split('.').concat(pa[2])[i]), 0);
+    });
+    dl.innerHTML = tags.map(t => `<option value="${esc(t)}"></option>`).join('');
+    hint.textContent = tags.length + ' тегов — начни вводить для поиска; релиз и RC берутся из тега';
+  } catch (e) {
+    hint.textContent = 'Ошибка загрузки тегов: ' + String(e);
+  }
+}
+
 async function onFind() {
-  state.env = $('env').value.trim();
-  state.release = $('release').value.trim();
-  state.rc = $('rc').value.trim();
-  const text = $('commits').value.trim();
-  if (!state.env || !state.release || !state.rc || !text) {
-    showBanner('input-banner', 'Заполни окружение, релиз, RC и коммиты.');
-    return;
+  const gitlabMode = $('mode-gitlab').checked;
+  let tag = '', text = '';
+  if (gitlabMode) {
+    state.env = $('gitlab-env').value.trim();
+    tag = $('gitlab-tag').value.trim();
+    if (!state.env || !tag) { showBanner('input-banner', 'Заполни окружение и выбери тег.'); return; }
+    const m = tag.match(TAG_RE);
+    if (!m) { showBanner('input-banner', 'Тег должен быть формата X.Y.Z-rcN, напр. 26.1.0-rc7.'); return; }
+    state.release = m[1]; state.rc = m[2];
+  } else {
+    state.env = $('env').value.trim();
+    state.release = $('release').value.trim();
+    state.rc = $('rc').value.trim();
+    text = $('commits').value.trim();
+    if (!state.env || !state.release || !state.rc || !text) {
+      showBanner('input-banner', 'Заполни окружение, релиз, RC и коммиты.');
+      return;
+    }
   }
   showBanner('input-banner', null);
+  showBanner('range-info', null);
   const btn = $('btn-find');
   btn.disabled = true; btn.textContent = '⏳ Загружаю тикеты…';
   try {
-    const res = await pywebview.api.parse_and_fetch(text);
+    const res = gitlabMode
+      ? await pywebview.api.fetch_from_gitlab(tag)
+      : await pywebview.api.parse_and_fetch(text);
     if (res.error === 'config') { showSettings('Настройки неполные — заполни и сохрани.'); return; }
-    if (res.error === 'no_tickets') { showBanner('input-banner', 'Тикеты в тексте не найдены (ожидается формат DEV-12345).'); return; }
+    if (res.error === 'gitlab_config') { showSettings('GitLab не настроен — заполни host/token/project.'); return; }
+    if (res.error === 'no_tag') { showBanner('input-banner', 'Укажи тег релиза.'); return; }
+    if (res.error === 'no_previous_tag') { showBanner('input-banner', esc(res.detail || 'Нет предыдущего тега.')); return; }
+    if (res.error === 'gitlab_fetch') { showBanner('input-banner', 'Ошибка GitLab: <small>' + esc(res.detail || '') + '</small>'); return; }
+    if (res.error === 'no_tickets') { showBanner('input-banner', 'Тикеты не найдены (ожидается формат DEV-12345).'); return; }
     if (res.error === 'jira_connect') {
       showBanner('input-banner',
         'JIRA недоступна — проверь логин/пароль в <a id="banner-open-settings">настройках</a>.<br><small>' + esc(res.detail || '') + '</small>');
       $('banner-open-settings').onclick = () => showSettings(null);
       return;
+    }
+    if (res.from_tag) {
+      showBanner('range-info', 'Коммиты: ' + esc(res.from_tag) + ' → ' + esc(res.to_tag));
     }
     state.tickets = res.tickets.map(t => ({ ...t, selected: true }));
     state.errors = res.errors || {};
@@ -153,6 +206,8 @@ function fillSettingsForm(s) {
   $('s-jira-host').value = s.jira_host; $('s-jira-user').value = s.jira_username;
   $('s-jira-pass').value = s.jira_password;
   $('s-testers').value = s.qa_testers.join(', '); $('s-lead').value = s.qa_lead;
+  $('s-gitlab-host').value = s.gitlab_host; $('s-gitlab-token').value = s.gitlab_token;
+  $('s-gitlab-project').value = s.gitlab_project;
 }
 
 function collectSettingsForm() {
@@ -165,6 +220,9 @@ function collectSettingsForm() {
     jira_password: $('s-jira-pass').value,
     qa_testers: $('s-testers').value.split(',').map(s => s.trim()).filter(Boolean),
     qa_lead: $('s-lead').value.trim(),
+    gitlab_host: $('s-gitlab-host').value.trim(),
+    gitlab_token: $('s-gitlab-token').value,
+    gitlab_project: $('s-gitlab-project').value.trim(),
   };
 }
 
@@ -203,12 +261,26 @@ async function onTestJira() {
   }
 }
 
+async function onTestGitlab() {
+  const btn = $('btn-test-gitlab');
+  btn.disabled = true;
+  try {
+    const res = await pywebview.api.test_gitlab(collectSettingsForm());
+    setBadge('gitlab-badge', res.ok, res.ok ? '✓ подключено' : '✗ ' + res.error);
+  } finally {
+    btn.disabled = false;
+  }
+}
+
 // ── init ─────────────────────────────────────────────────────────────────────
 async function init() {
   $('btn-find').onclick = onFind;
+  $('mode-manual').onchange = updateInputMode;
+  $('mode-gitlab').onchange = updateInputMode;
+  updateInputMode();
   $('btn-back-1').onclick = () => goStep(1);
   $('btn-execute').onclick = onExecute;
-  $('btn-new-run').onclick = () => { $('commits').value = ''; goStep(1); };
+  $('btn-new-run').onclick = () => { $('commits').value = ''; $('gitlab-tag').value = ''; goStep(1); };
   $('btn-copy-log').onclick = () => navigator.clipboard.writeText($('log').textContent);
   $('btn-resend').onclick = onResend;
   $('btn-settings').onclick = async () => { fillSettingsForm(await pywebview.api.get_settings()); showSettings(null); };
@@ -216,6 +288,7 @@ async function init() {
   $('btn-settings-save').onclick = onSaveSettings;
   $('btn-test-tg').onclick = onTestTelegram;
   $('btn-test-jira').onclick = onTestJira;
+  $('btn-test-gitlab').onclick = onTestGitlab;
   document.querySelectorAll('.eye').forEach(b => b.onclick = () => {
     const i = $(b.dataset.target);
     i.type = i.type === 'password' ? 'text' : 'password';
