@@ -23,10 +23,16 @@ class Config:
     qa_testers: list[str] = field(default_factory=list)
     qa_lead: str = ""
     telegram_proxy: str = ""
+    gitlab_host: str = ""
+    gitlab_token: str = ""
+    gitlab_project: str = ""
 
     def is_valid(self) -> bool:
         return all([self.bot_token, self.chat_id, self.jira_host,
                     self.jira_username, self.jira_password])
+
+    def gitlab_ready(self) -> bool:
+        return all([self.gitlab_host, self.gitlab_token, self.gitlab_project])
 
 
 _ENV_MAP = {
@@ -37,6 +43,9 @@ _ENV_MAP = {
     "jira_password": "JIRA_PASSWORD",
     "qa_lead": "JIRA_QA_LEAD",
     "telegram_proxy": "TELEGRAM_PROXY",
+    "gitlab_host": "GITLAB_HOST",
+    "gitlab_token": "GITLAB_TOKEN",
+    "gitlab_project": "GITLAB_PROJECT",
 }
 
 
