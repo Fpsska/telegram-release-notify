@@ -38,21 +38,53 @@ function updateInputMode() {
   const gitlabMode = $('mode-gitlab').checked;
   $('block-gitlab').classList.toggle('hidden', !gitlabMode);
   $('block-manual').classList.toggle('hidden', gitlabMode);
+  if (gitlabMode && !$('gitlab-tags').children.length) loadGitlabTags();
+}
+
+const TAG_RE = /^(\d+\.\d+\.\d+)-rc(\d+)$/;
+
+async function loadGitlabTags() {
+  const dl = $('gitlab-tags'), hint = $('gitlab-hint');
+  hint.textContent = 'Загружаю теги…';
+  try {
+    const res = await pywebview.api.get_gitlab_tags();
+    if (res.error === 'gitlab_config') { showSettings('GitLab не настроен — заполни host/token/project.'); return; }
+    if (res.error) { hint.textContent = 'Ошибка загрузки тегов: ' + (res.detail || res.error); return; }
+    const tags = (res.tags || []).slice().sort((a, b) => {
+      const pa = a.match(TAG_RE), pb = b.match(TAG_RE);
+      if (!pa && !pb) return 0;
+      if (!pa) return 1;
+      if (!pb) return -1;
+      return (pb[1].split('.').concat(pb[2]).map(Number))
+        .reduce((d, n, i) => d || n - Number(pa[1].split('.').concat(pa[2])[i]), 0);
+    });
+    dl.innerHTML = tags.map(t => `<option value="${esc(t)}"></option>`).join('');
+    hint.textContent = tags.length + ' тегов — начни вводить для поиска; релиз и RC берутся из тега';
+  } catch (e) {
+    hint.textContent = 'Ошибка загрузки тегов: ' + String(e);
+  }
 }
 
 async function onFind() {
-  state.env = $('env').value.trim();
-  state.release = $('release').value.trim();
-  state.rc = $('rc').value.trim();
-  if (!state.env || !state.release || !state.rc) {
-    showBanner('input-banner', 'Заполни окружение, релиз и RC.');
-    return;
-  }
   const gitlabMode = $('mode-gitlab').checked;
-  const tag = $('gitlab-tag').value.trim();
-  const text = $('commits').value.trim();
-  if (gitlabMode && !tag) { showBanner('input-banner', 'Укажи тег релиза.'); return; }
-  if (!gitlabMode && !text) { showBanner('input-banner', 'Вставь коммиты.'); return; }
+  let tag = '', text = '';
+  if (gitlabMode) {
+    state.env = $('gitlab-env').value.trim();
+    tag = $('gitlab-tag').value.trim();
+    if (!state.env || !tag) { showBanner('input-banner', 'Заполни окружение и выбери тег.'); return; }
+    const m = tag.match(TAG_RE);
+    if (!m) { showBanner('input-banner', 'Тег должен быть формата X.Y.Z-rcN, напр. 26.1.0-rc7.'); return; }
+    state.release = m[1]; state.rc = m[2];
+  } else {
+    state.env = $('env').value.trim();
+    state.release = $('release').value.trim();
+    state.rc = $('rc').value.trim();
+    text = $('commits').value.trim();
+    if (!state.env || !state.release || !state.rc || !text) {
+      showBanner('input-banner', 'Заполни окружение, релиз, RC и коммиты.');
+      return;
+    }
+  }
   showBanner('input-banner', null);
   showBanner('range-info', null);
   const btn = $('btn-find');

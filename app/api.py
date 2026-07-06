@@ -67,6 +67,17 @@ class Api:
         except Exception as e:
             return {"ok": False, "error": str(e)[:200]}
 
+    # ── список тегов для выпадающего списка в GitLab-режиме ──
+    def get_gitlab_tags(self) -> dict:
+        cfg = load_config()
+        if not cfg.gitlab_ready():
+            return {"error": "gitlab_config"}
+        try:
+            tags = gitlab_client.list_tags(cfg)
+        except Exception as e:
+            return {"error": "gitlab_fetch", "detail": str(e)[:200]}
+        return {"tags": tags}
+
     # ── общий путь: строки коммитов → тикеты из JIRA ──
     def _fetch_tickets(self, cfg, commits: list[str]) -> dict:
         tickets = extract_jira_tickets(commits)

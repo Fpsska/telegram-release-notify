@@ -22,26 +22,30 @@
 <!-- Шаг 1: Ввод -->
 <main id="screen-input">
   <div class="banner hidden" id="input-banner"></div>
-  <div class="row3">
-    <label class="field">Окружение
-      <input id="env" list="env-list" value="QA">
-      <datalist id="env-list"><option>QA</option><option>STAGE</option><option>PROD</option></datalist>
-    </label>
-    <label class="field">Релиз<input id="release" placeholder="26.1.0"></label>
-    <label class="field">RC<input id="rc" placeholder="7"></label>
-  </div>
+  <datalist id="env-list"><option>QA</option><option>STAGE</option><option>PROD</option></datalist>
   <div class="mode-switch">
     <label><input type="radio" name="input-mode" id="mode-manual" value="manual" checked> Вставить вручную</label>
     <label><input type="radio" name="input-mode" id="mode-gitlab" value="gitlab"> Из GitLab по тегу</label>
   </div>
-  <label class="field grow" id="block-manual">Коммиты
-    <textarea id="commits" placeholder="abc12345(BugFix DEV-12345 Fix something)&#10;def67890(Feature DEV-67890 Add thing)"></textarea>
-  </label>
-  <div id="block-gitlab" class="hidden">
-    <label class="field">Тег релиза
-      <input id="gitlab-tag" placeholder="26.1.0-rc7">
-      <small>коммиты берутся между этим тегом и предыдущим</small>
+  <div id="block-manual">
+    <div class="row3">
+      <label class="field">Окружение<input id="env" list="env-list" value="QA"></label>
+      <label class="field">Релиз<input id="release" placeholder="26.1.0"></label>
+      <label class="field">RC<input id="rc" placeholder="7"></label>
+    </div>
+    <label class="field grow">Коммиты
+      <textarea id="commits" placeholder="abc12345(BugFix DEV-12345 Fix something)&#10;def67890(Feature DEV-67890 Add thing)"></textarea>
     </label>
+  </div>
+  <div id="block-gitlab" class="hidden">
+    <div class="row3">
+      <label class="field">Окружение<input id="gitlab-env" list="env-list" value="QA"></label>
+      <label class="field wide">Тег релиза
+        <input id="gitlab-tag" list="gitlab-tags" placeholder="начни вводить тег…" autocomplete="off">
+        <datalist id="gitlab-tags"></datalist>
+        <small id="gitlab-hint">коммиты берутся между этим тегом и предыдущим; релиз и RC берутся из тега</small>
+      </label>
+    </div>
   </div>
   <button class="btn primary" id="btn-find">🔍 Найти тикеты</button>
 </main>

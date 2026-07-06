@@ -40,6 +40,8 @@ main[hidden] { display: none !important; }
 .row3 .field:first-child { flex: 1; }
 .row3 .field:nth-child(2) { flex: 1.4; }
 .row3 .field:last-child { width: 70px; }
+.row3 .field.wide { width: auto; flex: 3; }
+#block-manual, #block-gitlab { flex: 1; display: flex; flex-direction: column; gap: 10px; }
 .row-between { display: flex; justify-content: space-between; gap: 10px; margin-top: 4px; }
 
 .field { display: flex; flex-direction: column; gap: 4px; font-size: 11px; color: #8b949e; }
