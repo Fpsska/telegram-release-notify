@@ -36,8 +36,8 @@ const esc = (s) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, 
 // ── шаг 1 → 2 ────────────────────────────────────────────────────────────────
 function updateInputMode() {
   const gitlabMode = $('mode-gitlab').checked;
-  $('block-gitlab').hidden = !gitlabMode;
-  $('block-manual').hidden = gitlabMode;
+  $('block-gitlab').classList.toggle('hidden', !gitlabMode);
+  $('block-manual').classList.toggle('hidden', gitlabMode);
 }
 
 async function onFind() {
@@ -245,6 +245,7 @@ async function init() {
   $('btn-find').onclick = onFind;
   $('mode-manual').onchange = updateInputMode;
   $('mode-gitlab').onchange = updateInputMode;
+  updateInputMode();
   $('btn-back-1').onclick = () => goStep(1);
   $('btn-execute').onclick = onExecute;
   $('btn-new-run').onclick = () => { $('commits').value = ''; $('gitlab-tag').value = ''; goStep(1); };
