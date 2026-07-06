@@ -3,7 +3,7 @@ from unittest.mock import MagicMock
 import pytest
 
 from core.config import Config
-from core.gitlab_client import list_tags, previous_tag
+from core.gitlab_client import compare, list_tags, previous_tag
 
 
 def test_previous_tag_within_release():
@@ -84,3 +84,36 @@ def test_list_tags_raises_on_http_error(monkeypatch):
 
     with pytest.raises(RuntimeError):
         list_tags(_cfg())
+
+
+def test_compare_returns_commit_titles(monkeypatch):
+    def fake_get(url, headers=None, params=None, timeout=None):
+        assert params["from"] == "26.1.0-rc6"
+        assert params["to"] == "26.1.0-rc7"
+        resp = MagicMock()
+        resp.ok = True
+        resp.json.return_value = {"commits": [
+            {"title": "BugFix DEV-123 fix a"},
+            {"title": "BugFix DEV-456 fix b"},
+        ]}
+        return resp
+
+    monkeypatch.setattr("core.gitlab_client.requests.get", fake_get)
+
+    commits = compare(_cfg(), "26.1.0-rc6", "26.1.0-rc7")
+
+    assert commits == ["BugFix DEV-123 fix a", "BugFix DEV-456 fix b"]
+
+
+def test_compare_raises_on_http_error(monkeypatch):
+    def fake_get(url, headers=None, params=None, timeout=None):
+        resp = MagicMock()
+        resp.ok = False
+        resp.status_code = 404
+        resp.text = "not found"
+        return resp
+
+    monkeypatch.setattr("core.gitlab_client.requests.get", fake_get)
+
+    with pytest.raises(RuntimeError):
+        compare(_cfg(), "a", "b")

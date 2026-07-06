@@ -47,6 +47,19 @@ def list_tags(cfg: Config) -> list[str]:
     return tags
 
 
+def compare(cfg: Config, from_tag: str, to_tag: str) -> list[str]:
+    resp = requests.get(
+        _project_url(cfg, "/repository/compare"),
+        headers=_headers(cfg),
+        params={"from": from_tag, "to": to_tag},
+        timeout=30,
+    )
+    if not resp.ok:
+        raise RuntimeError(
+            f"GitLab compare error: {resp.status_code} {resp.text}")
+    return [c["title"] for c in resp.json().get("commits", [])]
+
+
 def previous_tag(tags: list[str], target: str) -> str:
     """Ближайший меньший тег по semver. ValueError если target не найден
     или предыдущего нет."""
