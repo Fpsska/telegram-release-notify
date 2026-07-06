@@ -30,14 +30,25 @@
     <label class="field">Релиз<input id="release" placeholder="26.1.0"></label>
     <label class="field">RC<input id="rc" placeholder="7"></label>
   </div>
-  <label class="field grow">Коммиты
+  <div class="mode-switch">
+    <label><input type="radio" name="input-mode" id="mode-manual" value="manual" checked> Вставить вручную</label>
+    <label><input type="radio" name="input-mode" id="mode-gitlab" value="gitlab"> Из GitLab по тегу</label>
+  </div>
+  <label class="field grow" id="block-manual">Коммиты
     <textarea id="commits" placeholder="abc12345(BugFix DEV-12345 Fix something)&#10;def67890(Feature DEV-67890 Add thing)"></textarea>
   </label>
+  <div id="block-gitlab" hidden>
+    <label class="field">Тег релиза
+      <input id="gitlab-tag" placeholder="26.1.0-rc7">
+      <small>коммиты берутся между этим тегом и предыдущим</small>
+    </label>
+  </div>
   <button class="btn primary" id="btn-find">🔍 Найти тикеты</button>
 </main>
 
 <!-- Шаг 2: Проверка -->
 <main id="screen-review" hidden>
+  <div class="banner hidden" id="range-info"></div>
   <div class="card">
     <div class="card-h"><span>Тикеты · <span id="ticket-count">0</span></span>
       <span class="ok" id="selected-count"></span></div>
