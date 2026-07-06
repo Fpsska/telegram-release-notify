@@ -31,9 +31,6 @@ class Config:
         return all([self.bot_token, self.chat_id, self.jira_host,
                     self.jira_username, self.jira_password])
 
-    def gitlab_ready(self) -> bool:
-        return all([self.gitlab_host, self.gitlab_token, self.gitlab_project])
-
 
 _ENV_MAP = {
     "bot_token": "BOT_TOKEN",

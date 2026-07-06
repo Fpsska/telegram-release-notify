@@ -3,7 +3,7 @@ from unittest.mock import MagicMock
 import pytest
 
 from core.config import Config
-from core.gitlab_client import compare, list_tags, previous_tag
+from core.gitlab_client import commits_for_tag, compare, list_tags, previous_tag
 
 
 def test_previous_tag_within_release():
@@ -117,3 +117,23 @@ def test_compare_raises_on_http_error(monkeypatch):
 
     with pytest.raises(RuntimeError):
         compare(_cfg(), "a", "b")
+
+
+def test_commits_for_tag_orchestrates(monkeypatch):
+    monkeypatch.setattr("core.gitlab_client.list_tags",
+                        lambda cfg: ["26.1.0-rc6", "26.1.0-rc7"])
+    monkeypatch.setattr("core.gitlab_client.compare",
+                        lambda cfg, f, t: [f"commits {f}->{t}"])
+
+    from_tag, to_tag, commits = commits_for_tag(_cfg(), "26.1.0-rc7")
+
+    assert from_tag == "26.1.0-rc6"
+    assert to_tag == "26.1.0-rc7"
+    assert commits == ["commits 26.1.0-rc6->26.1.0-rc7"]
+
+
+def test_commits_for_tag_propagates_no_previous(monkeypatch):
+    monkeypatch.setattr("core.gitlab_client.list_tags",
+                        lambda cfg: ["26.1.0-rc7"])
+    with pytest.raises(ValueError):
+        commits_for_tag(_cfg(), "26.1.0-rc7")

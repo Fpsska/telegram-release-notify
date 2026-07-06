@@ -60,6 +60,15 @@ def compare(cfg: Config, from_tag: str, to_tag: str) -> list[str]:
     return [c["title"] for c in resp.json().get("commits", [])]
 
 
+def commits_for_tag(cfg: Config, target: str) -> tuple[str, str, list[str]]:
+    """Возвращает (from_tag, to_tag, commit_titles). ValueError если нет
+    предыдущего тега."""
+    tags = list_tags(cfg)
+    from_tag = previous_tag(tags, target)
+    commits = compare(cfg, from_tag, target)
+    return from_tag, target, commits
+
+
 def previous_tag(tags: list[str], target: str) -> str:
     """Ближайший меньший тег по semver. ValueError если target не найден
     или предыдущего нет."""
