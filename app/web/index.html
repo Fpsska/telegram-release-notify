@@ -91,6 +91,15 @@
     <button class="btn ghost" id="btn-test-jira">Проверить подключение</button>
   </section>
   <section>
+    <h3>🦊 GitLab <span class="badge hidden" id="gitlab-badge"></span></h3>
+    <div class="grid2">
+      <label class="field full">Хост<input id="s-gitlab-host" placeholder="gitlab.yourcompany.com"><small>без https://</small></label>
+      <label class="field pw">Токен<input id="s-gitlab-token" type="password"><button type="button" class="eye" data-target="s-gitlab-token">👁</button></label>
+      <label class="field">Проект<input id="s-gitlab-project" placeholder="group/repo"><small>path или numeric id</small></label>
+    </div>
+    <button class="btn ghost" id="btn-test-gitlab">Проверить подключение</button>
+  </section>
+  <section>
     <h3>👥 Команда QA</h3>
     <div class="grid2">
       <label class="field full">Тестировщики<input id="s-testers" placeholder="user1, user2">

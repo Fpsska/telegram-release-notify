@@ -19,6 +19,7 @@ function showSettings(bannerText) {
   $('steps-bar').style.visibility = 'hidden';
   $('tg-badge').classList.add('hidden');
   $('jira-badge').classList.add('hidden');
+  $('gitlab-badge').classList.add('hidden');
   const b = $('settings-banner');
   b.classList.toggle('hidden', !bannerText);
   if (bannerText) b.textContent = bannerText;
@@ -153,6 +154,8 @@ function fillSettingsForm(s) {
   $('s-jira-host').value = s.jira_host; $('s-jira-user').value = s.jira_username;
   $('s-jira-pass').value = s.jira_password;
   $('s-testers').value = s.qa_testers.join(', '); $('s-lead').value = s.qa_lead;
+  $('s-gitlab-host').value = s.gitlab_host; $('s-gitlab-token').value = s.gitlab_token;
+  $('s-gitlab-project').value = s.gitlab_project;
 }
 
 function collectSettingsForm() {
@@ -165,6 +168,9 @@ function collectSettingsForm() {
     jira_password: $('s-jira-pass').value,
     qa_testers: $('s-testers').value.split(',').map(s => s.trim()).filter(Boolean),
     qa_lead: $('s-lead').value.trim(),
+    gitlab_host: $('s-gitlab-host').value.trim(),
+    gitlab_token: $('s-gitlab-token').value,
+    gitlab_project: $('s-gitlab-project').value.trim(),
   };
 }
 
@@ -203,6 +209,17 @@ async function onTestJira() {
   }
 }
 
+async function onTestGitlab() {
+  const btn = $('btn-test-gitlab');
+  btn.disabled = true;
+  try {
+    const res = await pywebview.api.test_gitlab(collectSettingsForm());
+    setBadge('gitlab-badge', res.ok, res.ok ? '✓ подключено' : '✗ ' + res.error);
+  } finally {
+    btn.disabled = false;
+  }
+}
+
 // ── init ─────────────────────────────────────────────────────────────────────
 async function init() {
   $('btn-find').onclick = onFind;
@@ -216,6 +233,7 @@ async function init() {
   $('btn-settings-save').onclick = onSaveSettings;
   $('btn-test-tg').onclick = onTestTelegram;
   $('btn-test-jira').onclick = onTestJira;
+  $('btn-test-gitlab').onclick = onTestGitlab;
   document.querySelectorAll('.eye').forEach(b => b.onclick = () => {
     const i = $(b.dataset.target);
     i.type = i.type === 'password' ? 'text' : 'password';
