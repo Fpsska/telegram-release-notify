@@ -11,7 +11,8 @@ def _version_key(tag: str) -> tuple[int, int, int, int] | None:
     m = _TAG_RE.match(tag)
     if not m:
         return None
-    return tuple(int(g) for g in m.groups())
+    a, b, c, d = m.groups()
+    return (int(a), int(b), int(c), int(d))
 
 
 def previous_tag(tags: list[str], target: str) -> str:

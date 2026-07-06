@@ -33,3 +33,9 @@ def test_previous_tag_raises_when_target_missing():
     tags = ["26.1.0-rc1", "26.1.0-rc2"]
     with pytest.raises(ValueError):
         previous_tag(tags, "99.9.9-rc9")
+
+
+def test_previous_tag_raises_when_target_bad_format():
+    tags = ["26.1.0-rc1", "26.1.0-rc2"]
+    with pytest.raises(ValueError):
+        previous_tag(tags, "not-a-tag")
