@@ -1,6 +1,9 @@
+from unittest.mock import MagicMock
+
 import pytest
 
-from core.gitlab_client import previous_tag
+from core.config import Config
+from core.gitlab_client import list_tags, previous_tag
 
 
 def test_previous_tag_within_release():
@@ -39,3 +42,45 @@ def test_previous_tag_raises_when_target_bad_format():
     tags = ["26.1.0-rc1", "26.1.0-rc2"]
     with pytest.raises(ValueError):
         previous_tag(tags, "not-a-tag")
+
+
+def _cfg():
+    return Config(gitlab_host="gitlab.example.com",
+                  gitlab_token="tok", gitlab_project="group/repo")
+
+
+def test_list_tags_paginates(monkeypatch):
+    page1 = [{"name": f"26.1.0-rc{i}"} for i in range(1, 101)]
+    page2 = [{"name": "26.1.0-rc101"}]
+    responses = [page1, page2]
+    calls = []
+
+    def fake_get(url, headers=None, params=None, timeout=None):
+        calls.append((url, dict(params)))
+        resp = MagicMock()
+        resp.ok = True
+        resp.json.return_value = responses[params["page"] - 1]
+        return resp
+
+    monkeypatch.setattr("core.gitlab_client.requests.get", fake_get)
+
+    tags = list_tags(_cfg())
+
+    assert tags[0] == "26.1.0-rc1"
+    assert tags[-1] == "26.1.0-rc101"
+    assert len(tags) == 101
+    assert "group%2Frepo" in calls[0][0]
+
+
+def test_list_tags_raises_on_http_error(monkeypatch):
+    def fake_get(url, headers=None, params=None, timeout=None):
+        resp = MagicMock()
+        resp.ok = False
+        resp.status_code = 401
+        resp.text = "unauthorized"
+        return resp
+
+    monkeypatch.setattr("core.gitlab_client.requests.get", fake_get)
+
+    with pytest.raises(RuntimeError):
+        list_tags(_cfg())

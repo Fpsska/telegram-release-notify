@@ -15,6 +15,38 @@ def _version_key(tag: str) -> tuple[int, int, int, int] | None:
     return (int(a), int(b), int(c), int(d))
 
 
+def _headers(cfg: Config) -> dict:
+    return {"PRIVATE-TOKEN": cfg.gitlab_token}
+
+
+def _project_url(cfg: Config, suffix: str) -> str:
+    project = requests.utils.quote(cfg.gitlab_project, safe="")
+    return f"https://{cfg.gitlab_host}/api/v4/projects/{project}{suffix}"
+
+
+def list_tags(cfg: Config) -> list[str]:
+    tags: list[str] = []
+    page = 1
+    while True:
+        resp = requests.get(
+            _project_url(cfg, "/repository/tags"),
+            headers=_headers(cfg),
+            params={"per_page": 100, "page": page},
+            timeout=15,
+        )
+        if not resp.ok:
+            raise RuntimeError(
+                f"GitLab tags error: {resp.status_code} {resp.text}")
+        batch = resp.json()
+        if not batch:
+            break
+        tags.extend(item["name"] for item in batch)
+        if len(batch) < 100:
+            break
+        page += 1
+    return tags
+
+
 def previous_tag(tags: list[str], target: str) -> str:
     """Ближайший меньший тег по semver. ValueError если target не найден
     или предыдущего нет."""
