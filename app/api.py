@@ -1,6 +1,6 @@
 import json
 
-from core import jira_client
+from core import gitlab_client, jira_client
 from core.config import Config, load_config, save_config
 from core.telegram import build_message, send_telegram
 from core.tickets import extract_jira_tickets
@@ -31,6 +31,9 @@ class Api:
             qa_testers=data.get("qa_testers", []),
             qa_lead=data.get("qa_lead", ""),
             telegram_proxy=data.get("telegram_proxy", ""),
+            gitlab_host=data.get("gitlab_host", ""),
+            gitlab_token=data.get("gitlab_token", ""),
+            gitlab_project=data.get("gitlab_project", ""),
         )
 
     def get_settings(self) -> dict:
@@ -56,13 +59,17 @@ class Api:
         except Exception as e:
             return {"ok": False, "error": str(e)[:200]}
 
-    # ── шаг 1 → 2 ──
-    def parse_and_fetch(self, commits_text: str) -> dict:
-        cfg = load_config()
-        if not cfg.is_valid():
-            return {"error": "config"}
-        lines = [l for l in commits_text.splitlines() if l.strip()]
-        tickets = extract_jira_tickets(lines)
+    def test_gitlab(self, data: dict) -> dict:
+        cfg = self._config_from(data)
+        try:
+            gitlab_client.list_tags(cfg)
+            return {"ok": True, "error": ""}
+        except Exception as e:
+            return {"ok": False, "error": str(e)[:200]}
+
+    # ── общий путь: строки коммитов → тикеты из JIRA ──
+    def _fetch_tickets(self, cfg, commits: list[str]) -> dict:
+        tickets = extract_jira_tickets(commits)
         if not tickets:
             return {"error": "no_tickets"}
         try:
@@ -79,6 +86,36 @@ class Api:
             ],
             "errors": errors,
         }
+
+    # ── шаг 1 → 2: ручная вставка ──
+    def parse_and_fetch(self, commits_text: str) -> dict:
+        cfg = load_config()
+        if not cfg.is_valid():
+            return {"error": "config"}
+        lines = [l for l in commits_text.splitlines() if l.strip()]
+        return self._fetch_tickets(cfg, lines)
+
+    # ── шаг 1 → 2: из GitLab по тегу ──
+    def fetch_from_gitlab(self, tag: str) -> dict:
+        cfg = load_config()
+        if not cfg.is_valid():
+            return {"error": "config"}
+        if not cfg.gitlab_ready():
+            return {"error": "gitlab_config"}
+        tag = (tag or "").strip()
+        if not tag:
+            return {"error": "no_tag"}
+        try:
+            from_tag, to_tag, commits = gitlab_client.commits_for_tag(cfg, tag)
+        except ValueError as e:
+            return {"error": "no_previous_tag", "detail": str(e)}
+        except Exception as e:
+            return {"error": "gitlab_fetch", "detail": str(e)[:200]}
+        self._log(f"GitLab: коммиты {from_tag} → {to_tag}")
+        result = self._fetch_tickets(cfg, commits)
+        result["from_tag"] = from_tag
+        result["to_tag"] = to_tag
+        return result
 
     # ── шаг 3 ──
     def execute(self, selected_keys: list, environment: str,
