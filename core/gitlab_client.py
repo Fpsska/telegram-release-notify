@@ -20,8 +20,9 @@ def _headers(cfg: Config) -> dict:
 
 
 def _project_url(cfg: Config, suffix: str) -> str:
+    host = re.sub(r"^https?://", "", cfg.gitlab_host.strip()).rstrip("/")
     project = requests.utils.quote(cfg.gitlab_project, safe="")
-    return f"https://{cfg.gitlab_host}/api/v4/projects/{project}{suffix}"
+    return f"https://{host}/api/v4/projects/{project}{suffix}"
 
 
 def list_tags(cfg: Config) -> list[str]:

@@ -3,7 +3,8 @@ from unittest.mock import MagicMock
 import pytest
 
 from core.config import Config
-from core.gitlab_client import commits_for_tag, compare, list_tags, previous_tag
+from core.gitlab_client import (_project_url, commits_for_tag, compare,
+                                 list_tags, previous_tag)
 
 
 def test_previous_tag_within_release():
@@ -47,6 +48,19 @@ def test_previous_tag_raises_when_target_bad_format():
 def _cfg():
     return Config(gitlab_host="gitlab.example.com",
                   gitlab_token="tok", gitlab_project="group/repo")
+
+
+def test_project_url_strips_scheme_and_trailing_slash():
+    cfg = Config(gitlab_host="https://git.angara.cloud/", gitlab_project="86")
+    url = _project_url(cfg, "/repository/tags")
+    assert url == "https://git.angara.cloud/api/v4/projects/86/repository/tags"
+
+
+def test_project_url_plain_host():
+    cfg = Config(gitlab_host="gitlab.example.com", gitlab_project="group/repo")
+    url = _project_url(cfg, "/repository/compare")
+    assert url == ("https://gitlab.example.com/api/v4/projects/"
+                   "group%2Frepo/repository/compare")
 
 
 def test_list_tags_paginates(monkeypatch):
