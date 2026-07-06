@@ -113,8 +113,9 @@ class Api:
             return {"error": "gitlab_fetch", "detail": str(e)[:200]}
         self._log(f"GitLab: коммиты {from_tag} → {to_tag}")
         result = self._fetch_tickets(cfg, commits)
-        result["from_tag"] = from_tag
-        result["to_tag"] = to_tag
+        if "error" not in result:
+            result["from_tag"] = from_tag
+            result["to_tag"] = to_tag
         return result
 
     # ── шаг 3 ──
