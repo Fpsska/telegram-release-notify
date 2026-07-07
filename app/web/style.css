@@ -129,7 +129,8 @@ section h3 { font-size: 12px; text-transform: uppercase; letter-spacing: 1px;
   .steps {
     flex-direction: column;
     gap: 16px;
-    align-items: center;
+    align-items: start;
+    margin: 0 auto;
   }
   .step-line {
     display: none;
