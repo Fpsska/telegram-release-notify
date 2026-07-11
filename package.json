@@ -1,0 +1,25 @@
+{
+  "name": "telegram-release-notify",
+  "version": "1.0.0",
+  "description": "Инструмент для отправки уведомлений о релизе в Telegram-чат",
+  "main": "app.js",
+  "scripts": {
+    "test": "vitest"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/petr-ananev/telegram-release-notify.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/petr-ananev/telegram-release-notify/issues"
+  },
+  "homepage": "https://github.com/petr-ananev/telegram-release-notify#readme",
+  "devDependencies": {
+    "jsdom": "^29.1.1",
+    "vitest": "^4.1.10"
+  }
+}

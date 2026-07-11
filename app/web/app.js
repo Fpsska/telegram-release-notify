@@ -1,6 +1,11 @@
 const $ = (id) => document.getElementById(id);
 const state = { tickets: [], errors: {}, env: '', release: '', rc: '' };
 
+// TODO: DELETE
+export function logging(text) {
+  return text;
+}
+
 // ── навигация ────────────────────────────────────────────────────────────────
 function goStep(n) {
   ['input', 'review', 'result'].forEach((name, i) => {
@@ -299,4 +304,5 @@ async function init() {
   if (!s.valid) showSettings('Первый запуск: заполни настройки, чтобы начать.');
   else goStep(1);
 }
+
 window.addEventListener('pywebviewready', init);
