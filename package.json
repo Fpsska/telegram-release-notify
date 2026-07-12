@@ -4,7 +4,8 @@
     "description": "Инструмент для отправки уведомлений о релизе в Telegram-чат",
     "main": "app.js",
     "scripts": {
-        "test": "vitest run",
+        "test": "vitest --watch=false",
+        "test:ci": "npm run test -- --coverage --coverage.reporter=text",
         "prettify": "prettier \"app/web/\" --write"
     },
     "repository": {
@@ -20,6 +21,7 @@
     },
     "homepage": "https://github.com/petr-ananev/telegram-release-notify#readme",
     "devDependencies": {
+        "@vitest/coverage-v8": "^4.1.10",
         "jsdom": "^29.1.1",
         "prettier": "^3.9.5",
         "vitest": "^4.1.10"
