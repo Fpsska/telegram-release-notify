@@ -49,7 +49,7 @@ async function loadGitlabTags() {
   try {
     const res = await pywebview.api.get_gitlab_tags();
     if (res.error === 'gitlab_config') { showSettings('GitLab не настроен — заполни host/token/project.'); return; }
-    if (res.error) { hint.textContent = 'Ошибка загрузки тегов: ' + (res.detail || res.error); return; }
+    if (res.error) { hint.textContent = `Ошибка загрузки тегов: ${res.detail || res.error}`; return; }
     const tags = (res.tags || []).slice().sort((a, b) => {
       const pa = a.match(TAG_RE), pb = b.match(TAG_RE);
       if (!pa && !pb) return 0;
@@ -59,9 +59,9 @@ async function loadGitlabTags() {
         .reduce((d, n, i) => d || n - Number(pa[1].split('.').concat(pa[2])[i]), 0);
     });
     dl.innerHTML = tags.map(t => `<option value="${esc(t)}"></option>`).join('');
-    hint.textContent = tags.length + ' тегов — начни вводить для поиска; релиз и RC берутся из тега';
+    hint.textContent = `${tags.length} тегов — начни вводить для поиска; релиз и RC берутся из тега`;
   } catch (e) {
-    hint.textContent = 'Ошибка загрузки тегов: ' + String(e);
+    hint.textContent = `Ошибка загрузки тегов: ${String(e)}`;
   }
 }
 
@@ -106,7 +106,7 @@ async function onFind() {
       return;
     }
     if (res.from_tag) {
-      showBanner('range-info', 'Коммиты: ' + esc(res.from_tag) + ' → ' + esc(res.to_tag));
+      showBanner('range-info', `Коммиты: ${esc(res.from_tag)} → ${esc(res.to_tag)}`);
     }
     state.tickets = res.tickets.map(t => ({ ...t, selected: true }));
     state.errors = res.errors || {};
@@ -114,7 +114,7 @@ async function onFind() {
     updatePreview();
     goStep(2);
   } catch (e) {
-    showBanner('input-banner', 'Ошибка: ' + esc(String(e)));
+    showBanner('input-banner', `Ошибка: ${esc(String(e))}`);
   } finally {
     btn.disabled = false; btn.textContent = '🔍 Найти тикеты';
   }
@@ -155,7 +155,7 @@ function renderTickets() {
 
 function updatePreview() {
   const selected = state.tickets.filter(t => t.selected);
-  $('selected-count').textContent = '✓ выбрано ' + selected.length;
+  $('selected-count').textContent = `✓ выбрано ${selected.length}`;
   const lines = [`📋 На ${esc(state.env)} ${esc(state.release)}-rc${esc(state.rc)}:`];
   for (const t of selected) lines.push(`<a>${esc(t.key)} - ${esc(t.summary)}</a>`);
   $('msg-preview').innerHTML = lines.join('<br><br>');
@@ -170,7 +170,10 @@ function appendLog(line) {          // зовётся из Python через eva
 }
 
 async function onExecute() {
-  const keys = state.tickets.filter(t => t.selected).map(t => t.key);
+  const keys = state.tickets.reduce((acc, t) => {
+    if (t.selected) acc.push(t.key);
+    return acc;
+  }, []);
   goStep(3);
   try {
     $('log').textContent = '';
@@ -186,7 +189,7 @@ async function onExecute() {
     $('btn-resend').classList.toggle('hidden', res.telegram_ok);
   } catch (e) {
     $('result-summary').innerHTML = `<span class="warn">⚠ Ошибка выполнения: ${esc(String(e))}</span>`;
-    appendLog('⚠ Ошибка выполнения: ' + String(e));
+    appendLog(`⚠ Ошибка выполнения: ${String(e)}`);
   }
 }
 
@@ -201,12 +204,16 @@ async function onResend() {
 
 // ── настройки ────────────────────────────────────────────────────────────────
 function fillSettingsForm(s) {
-  $('s-bot-token').value = s.bot_token; $('s-chat-id').value = s.chat_id;
+  $('s-bot-token').value = s.bot_token;
+  $('s-chat-id').value = s.chat_id;
   $('s-proxy').value = s.telegram_proxy;
-  $('s-jira-host').value = s.jira_host; $('s-jira-user').value = s.jira_username;
+  $('s-jira-host').value = s.jira_host;
+  $('s-jira-user').value = s.jira_username;
   $('s-jira-pass').value = s.jira_password;
-  $('s-testers').value = s.qa_testers.join(', '); $('s-lead').value = s.qa_lead;
-  $('s-gitlab-host').value = s.gitlab_host; $('s-gitlab-token').value = s.gitlab_token;
+  $('s-testers').value = s.qa_testers.join(', ');
+  $('s-lead').value = s.qa_lead;
+  $('s-gitlab-host').value = s.gitlab_host;
+  $('s-gitlab-token').value = s.gitlab_token;
   $('s-gitlab-project').value = s.gitlab_project;
 }
 
