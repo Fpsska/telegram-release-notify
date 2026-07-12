@@ -4,6 +4,7 @@ import {
     goStep,
     showSettings,
     showBanner,
+    esc,
     updateInputMode,
     loadGitlabTags,
     onFind,

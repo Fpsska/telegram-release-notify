@@ -1,10 +1,14 @@
 import { beforeEach, afterEach } from 'vitest';
 import rawHtml from './app/web/index.html?raw'; // original HTML as string
 
-function setActualTestDOM() {
-    document.body.innerHTML = rawHtml;
+function setActualTestDOM(value) {
+    document.body.innerHTML = value;
 }
 
 beforeEach(() => {
-    setActualTestDOM();
+    setActualTestDOM(rawHtml);
+});
+
+afterEach(() => {
+    setActualTestDOM('');
 });

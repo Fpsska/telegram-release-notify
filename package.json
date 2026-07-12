@@ -4,7 +4,7 @@
     "description": "Инструмент для отправки уведомлений о релизе в Telegram-чат",
     "main": "app.js",
     "scripts": {
-        "test": "vitest",
+        "test": "vitest run",
         "prettify": "prettier \"app/web/\" --write"
     },
     "repository": {
