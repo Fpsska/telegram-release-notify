@@ -1,9 +1,9 @@
 {
-  "singleAttributePerLine": false,
-  "jsxSingleQuote": false,
-  "singleQuote": true,
-  "useTabs": false,
-  "tabWidth": 4,
-  "printWidth": 80,
-  "endOfLine": "auto"
+    "singleAttributePerLine": false,
+    "jsxSingleQuote": false,
+    "singleQuote": true,
+    "useTabs": false,
+    "tabWidth": 4,
+    "printWidth": 140,
+    "endOfLine": "auto"
 }
