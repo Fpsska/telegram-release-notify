@@ -12,7 +12,7 @@
         "url": "git+https://github.com/petr-ananev/telegram-release-notify.git"
     },
     "keywords": [],
-    "author": "",
+    "author": "Petr Ananev",
     "license": "ISC",
     "type": "module",
     "bugs": {

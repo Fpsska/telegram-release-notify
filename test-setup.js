@@ -8,5 +8,3 @@ function setActualTestDOM() {
 beforeEach(() => {
     setActualTestDOM();
 });
-
-console.log('✅ test-setup.js loaded');
