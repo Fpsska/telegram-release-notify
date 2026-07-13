@@ -2,7 +2,7 @@ const $ = (id) => document.getElementById(id);
 const state = { tickets: [], errors: {}, env: '', release: '', rc: '' };
 
 // ── навигация ────────────────────────────────────────────────────────────────
-function goStep(n) {
+export function goStep(n) {
   ['input', 'review', 'result'].forEach((name, i) => {
     $('screen-' + name).hidden = (i !== n - 1);
     const st = $('step-' + (i + 1));
@@ -13,7 +13,7 @@ function goStep(n) {
   $('steps-bar').style.visibility = 'visible';
 }
 
-function showSettings(bannerText) {
+export function showSettings(bannerText) {
   ['input', 'review', 'result'].forEach(n => $('screen-' + n).hidden = true);
   $('screen-settings').hidden = false;
   $('steps-bar').style.visibility = 'hidden';
@@ -25,16 +25,16 @@ function showSettings(bannerText) {
   if (bannerText) b.textContent = bannerText;
 }
 
-function showBanner(id, text) {
+export function showBanner(id, text) {
   const b = $(id);
   b.classList.toggle('hidden', !text);
   if (text) b.innerHTML = text;
 }
 
-const esc = (s) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+export const esc = (s) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
 // ── шаг 1 → 2 ────────────────────────────────────────────────────────────────
-function updateInputMode() {
+export function updateInputMode() {
   const gitlabMode = $('mode-gitlab').checked;
   $('block-gitlab').classList.toggle('hidden', !gitlabMode);
   $('block-manual').classList.toggle('hidden', gitlabMode);
@@ -43,7 +43,7 @@ function updateInputMode() {
 
 const TAG_RE = /^(\d+\.\d+\.\d+)-rc(\d+)$/;
 
-async function loadGitlabTags() {
+export async function loadGitlabTags() {
   const dl = $('gitlab-tags'), hint = $('gitlab-hint');
   hint.textContent = 'Загружаю теги…';
   try {
@@ -65,7 +65,7 @@ async function loadGitlabTags() {
   }
 }
 
-async function onFind() {
+export async function onFind() {
   const gitlabMode = $('mode-gitlab').checked;
   let tag = '', text = '';
   if (gitlabMode) {
@@ -121,7 +121,7 @@ async function onFind() {
 }
 
 // ── шаг 2 ────────────────────────────────────────────────────────────────────
-function renderTickets() {
+export function renderTickets() {
   const box = $('ticket-list');
   box.innerHTML = '';
   for (const t of state.tickets) {
@@ -153,7 +153,7 @@ function renderTickets() {
   $('ticket-count').textContent = state.tickets.length + Object.keys(state.errors).length;
 }
 
-function updatePreview() {
+export function updatePreview() {
   const selected = state.tickets.filter(t => t.selected);
   $('selected-count').textContent = `✓ выбрано ${selected.length}`;
   const lines = [`📋 На ${esc(state.env)} ${esc(state.release)}-rc${esc(state.rc)}:`];
@@ -163,13 +163,13 @@ function updatePreview() {
 }
 
 // ── шаг 3 ────────────────────────────────────────────────────────────────────
-function appendLog(line) {          // зовётся из Python через evaluate_js
+export function appendLog(line) {          // зовётся из Python через evaluate_js
   const log = $('log');
   log.textContent += line + '\n';
   log.scrollTop = log.scrollHeight;
 }
 
-async function onExecute() {
+export async function onExecute() {
   const keys = state.tickets.reduce((acc, t) => {
     if (t.selected) acc.push(t.key);
     return acc;
@@ -193,7 +193,7 @@ async function onExecute() {
   }
 }
 
-async function onResend() {
+export async function onResend() {
   $('btn-resend').disabled = true;
   const res = await pywebview.api.resend_telegram();
   $('btn-resend').disabled = false;
@@ -203,7 +203,7 @@ async function onResend() {
 }
 
 // ── настройки ────────────────────────────────────────────────────────────────
-function fillSettingsForm(s) {
+export function fillSettingsForm(s) {
   $('s-bot-token').value = s.bot_token;
   $('s-chat-id').value = s.chat_id;
   $('s-proxy').value = s.telegram_proxy;
@@ -217,7 +217,7 @@ function fillSettingsForm(s) {
   $('s-gitlab-project').value = s.gitlab_project;
 }
 
-function collectSettingsForm() {
+export function collectSettingsForm() {
   return {
     bot_token: $('s-bot-token').value.trim(),
     chat_id: $('s-chat-id').value.trim(),
@@ -233,20 +233,20 @@ function collectSettingsForm() {
   };
 }
 
-function setBadge(id, good, text) {
+export function setBadge(id, good, text) {
   const b = $(id);
   b.classList.remove('hidden', 'good', 'bad');
   b.classList.add(good ? 'good' : 'bad');
   b.textContent = text;
 }
 
-async function onSaveSettings() {
+export async function onSaveSettings() {
   const res = await pywebview.api.save_settings(collectSettingsForm());
   if (!res.valid) { showSettings('Не хватает обязательных полей.'); return; }
   goStep(1);
 }
 
-async function onTestTelegram() {
+export async function onTestTelegram() {
   const btn = $('btn-test-tg');
   btn.disabled = true;
   try {
@@ -257,7 +257,7 @@ async function onTestTelegram() {
   }
 }
 
-async function onTestJira() {
+export async function onTestJira() {
   const btn = $('btn-test-jira');
   btn.disabled = true;
   try {
@@ -268,7 +268,7 @@ async function onTestJira() {
   }
 }
 
-async function onTestGitlab() {
+export async function onTestGitlab() {
   const btn = $('btn-test-gitlab');
   btn.disabled = true;
   try {
@@ -306,4 +306,5 @@ async function init() {
   if (!s.valid) showSettings('Первый запуск: заполни настройки, чтобы начать.');
   else goStep(1);
 }
+
 window.addEventListener('pywebviewready', init);
