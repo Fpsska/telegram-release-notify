@@ -1,135 +1,167 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ru">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <link rel="icon" type="image/x-icon" href="assets/favicon.ico">
-  <link rel="stylesheet" href="style.css">
-  <title>Release Notify</title>
-</head>
-<body>
-<header>
-  <div class="brand"><span class="logo">📋</span> Release Notify</div>
-  <button class="icon-btn" id="btn-settings" title="Настройки">⚙</button>
-</header>
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <link rel="icon" type="image/x-icon" href="assets/favicon.ico" />
+        <link rel="stylesheet" href="style.css" />
+        <title>Release Notify</title>
+    </head>
+    <body>
+        <header>
+            <div class="brand"><span class="logo">📋</span> Release Notify</div>
+            <button class="icon-btn" id="btn-settings" title="Настройки">⚙</button>
+        </header>
 
-<nav class="steps" id="steps-bar">
-  <div class="step active" id="step-1"><span class="n">1</span><span class="t">Ввод</span></div>
-  <div class="step-line"></div>
-  <div class="step" id="step-2"><span class="n">2</span><span class="t">Проверка</span></div>
-  <div class="step-line"></div>
-  <div class="step" id="step-3"><span class="n">3</span><span class="t">Результат</span></div>
-</nav>
+        <nav class="steps" id="steps-bar">
+            <div class="step active" id="step-1"><span class="n">1</span><span class="t">Ввод</span></div>
+            <div class="step-line"></div>
+            <div class="step" id="step-2"><span class="n">2</span><span class="t">Проверка</span></div>
+            <div class="step-line"></div>
+            <div class="step" id="step-3"><span class="n">3</span><span class="t">Результат</span></div>
+        </nav>
 
-<!-- Шаг 1: Ввод -->
-<main id="screen-input">
-  <div class="banner hidden" id="input-banner"></div>
-  <datalist id="env-list"><option>QA</option><option>STAGE</option><option>PROD</option></datalist>
-  <div class="mode-switch">
-    <label><input type="radio" name="input-mode" id="mode-manual" value="manual" checked> Вставить вручную</label>
-    <label><input type="radio" name="input-mode" id="mode-gitlab" value="gitlab"> Из GitLab по тегу</label>
-  </div>
-  <div id="block-manual">
-    <div class="row3">
-      <label class="field">Окружение<input id="env" list="env-list" value="QA"></label>
-      <label class="field">Релиз<input id="release" placeholder="26.1.0"></label>
-      <label class="field">RC<input id="rc" placeholder="7"></label>
-    </div>
-    <label class="field grow">Коммиты
-      <textarea id="commits" placeholder="abc12345(BugFix DEV-12345 Fix something)&#10;def67890(Feature DEV-67890 Add thing)"></textarea>
-    </label>
-  </div>
-  <div id="block-gitlab" class="hidden">
-    <div class="row3">
-      <label class="field">Окружение<input id="gitlab-env" list="env-list" value="QA"></label>
-      <label class="field wide">Тег релиза
-        <input id="gitlab-tag" list="gitlab-tags" placeholder="начни вводить тег…" autocomplete="off">
-        <datalist id="gitlab-tags"></datalist>
-        <small id="gitlab-hint">коммиты берутся между этим тегом и предыдущим; релиз и RC берутся из тега</small>
-      </label>
-    </div>
-  </div>
-  <button class="btn primary" id="btn-find">🔍 Найти тикеты</button>
-</main>
+        <!-- Шаг 1: Ввод -->
+        <main id="screen-input">
+            <div class="banner hidden" id="input-banner"></div>
+            <datalist id="env-list">
+                <option>QA</option>
+                <option>STAGE</option>
+                <option>PROD</option>
+            </datalist>
+            <div class="mode-switch">
+                <label><input type="radio" name="input-mode" id="mode-manual" value="manual" checked /> Вставить вручную</label>
+                <label><input type="radio" name="input-mode" id="mode-gitlab" value="gitlab" /> Из GitLab по тегу</label>
+            </div>
+            <div id="block-manual">
+                <div class="row3">
+                    <label class="field">Окружение<input id="env" list="env-list" value="QA" /></label>
+                    <label class="field">Релиз<input id="release" placeholder="26.1.0" /></label>
+                    <label class="field">RC<input id="rc" placeholder="7" /></label>
+                </div>
+                <label class="field grow"
+                    >Коммиты
+                    <textarea
+                        id="commits"
+                        placeholder="abc12345(BugFix DEV-12345 Fix something)&#10;def67890(Feature DEV-67890 Add thing)"
+                    ></textarea>
+                </label>
+            </div>
+            <div id="block-gitlab" class="hidden">
+                <div class="row3">
+                    <label class="field">Окружение<input id="gitlab-env" list="env-list" value="QA" /></label>
+                    <label class="field wide"
+                        >Тег релиза
+                        <input id="gitlab-tag" list="gitlab-tags" placeholder="начни вводить тег…" autocomplete="off" />
+                        <datalist id="gitlab-tags"></datalist>
+                        <small id="gitlab-hint">коммиты берутся между этим тегом и предыдущим; релиз и RC берутся из тега</small>
+                    </label>
+                </div>
+            </div>
+            <button class="btn primary" id="btn-find">🔍 Найти тикеты</button>
+        </main>
 
-<!-- Шаг 2: Проверка -->
-<main id="screen-review" hidden>
-  <div class="banner hidden" id="range-info"></div>
-  <div class="card">
-    <div class="card-h"><span>Тикеты · <span id="ticket-count">0</span></span>
-      <span class="ok" id="selected-count"></span></div>
-    <div id="ticket-list"></div>
-  </div>
-  <div class="card">
-    <div class="card-h">Сообщение в Telegram</div>
-    <div class="msg-preview" id="msg-preview"></div>
-  </div>
-  <div class="row-between">
-    <button class="btn ghost" id="btn-back-1">← Назад</button>
-    <button class="btn primary" id="btn-execute">▶ Выполнить</button>
-  </div>
-</main>
+        <!-- Шаг 2: Проверка -->
+        <main id="screen-review" hidden>
+            <div class="banner hidden" id="range-info"></div>
+            <div class="card">
+                <div class="card-h">
+                    <span>Тикеты · <span id="ticket-count">0</span></span> <span class="ok" id="selected-count"></span>
+                </div>
+                <div id="ticket-list"></div>
+            </div>
+            <div class="card">
+                <div class="card-h">Сообщение в Telegram</div>
+                <div class="msg-preview" id="msg-preview"></div>
+            </div>
+            <div class="row-between">
+                <button class="btn ghost" id="btn-back-1">← Назад</button>
+                <button class="btn primary" id="btn-execute">▶ Выполнить</button>
+            </div>
+        </main>
 
-<!-- Шаг 3: Результат -->
-<main id="screen-result" hidden>
-  <div class="card grow">
-    <div class="card-h">Лог выполнения</div>
-    <pre id="log"></pre>
-  </div>
-  <div id="result-summary"></div>
-  <div class="row-between">
-    <button class="btn ghost" id="btn-copy-log">Копировать лог</button>
-    <button class="btn ghost hidden" id="btn-resend">↻ Повторить отправку</button>
-    <button class="btn primary" id="btn-new-run">Новый прогон</button>
-  </div>
-</main>
+        <!-- Шаг 3: Результат -->
+        <main id="screen-result" hidden>
+            <div class="card grow">
+                <div class="card-h">Лог выполнения</div>
+                <pre id="log"></pre>
+            </div>
+            <div id="result-summary"></div>
+            <div class="row-between">
+                <button class="btn ghost" id="btn-copy-log">Копировать лог</button>
+                <button class="btn ghost hidden" id="btn-resend">↻ Повторить отправку</button>
+                <button class="btn primary" id="btn-new-run">Новый прогон</button>
+            </div>
+        </main>
 
-<!-- Настройки -->
-<main id="screen-settings" hidden>
-  <div class="banner hidden" id="settings-banner"></div>
-  <section>
-    <h3>✈ Telegram <span class="badge hidden" id="tg-badge"></span></h3>
-    <div class="grid2">
-      <label class="field pw">Bot Token<input id="s-bot-token" type="password"><button type="button" class="eye" data-target="s-bot-token">👁</button></label>
-      <label class="field">Chat ID<input id="s-chat-id"></label>
-      <label class="field full">Прокси (опционально)
-        <input id="s-proxy" placeholder="socks5://user:pass@host:1080">
-        <small>SOCKS5 или HTTP, пусто = без прокси</small></label>
-    </div>
-    <button class="btn ghost" id="btn-test-tg">Проверить: отправить тест в чат</button>
-  </section>
-  <section>
-    <h3>🔧 JIRA <span class="badge hidden" id="jira-badge"></span></h3>
-    <div class="grid2">
-      <label class="field full">Хост<input id="s-jira-host" placeholder="jira.yourcompany.com"><small>без https://</small></label>
-      <label class="field">Логин<input id="s-jira-user"></label>
-      <label class="field pw">Пароль<input id="s-jira-pass" type="password"><button type="button" class="eye" data-target="s-jira-pass">👁</button></label>
-    </div>
-    <button class="btn ghost" id="btn-test-jira">Проверить подключение</button>
-  </section>
-  <section>
-    <h3>🦊 GitLab <span class="badge hidden" id="gitlab-badge"></span></h3>
-    <div class="grid2">
-      <label class="field full">Хост<input id="s-gitlab-host" placeholder="gitlab.yourcompany.com"><small>без https://</small></label>
-      <label class="field pw">Токен<input id="s-gitlab-token" type="password"><button type="button" class="eye" data-target="s-gitlab-token">👁</button></label>
-      <label class="field">Проект<input id="s-gitlab-project" placeholder="group/repo"><small>path или numeric id</small></label>
-    </div>
-    <button class="btn ghost" id="btn-test-gitlab">Проверить подключение</button>
-  </section>
-  <section>
-    <h3>👥 Команда QA</h3>
-    <div class="grid2">
-      <label class="field full">Тестировщики<input id="s-testers" placeholder="user1, user2">
-        <small>логины JIRA через запятую — если репортер в списке, тикет назначается ему</small></label>
-      <label class="field full">QA-лид<input id="s-lead"><small>получает тикеты остальных репортеров</small></label>
-    </div>
-  </section>
-  <div class="row-between">
-    <button class="btn ghost" id="btn-settings-cancel">Отмена</button>
-    <button class="btn primary" id="btn-settings-save">Сохранить</button>
-  </div>
-</main>
+        <!-- Настройки -->
+        <main id="screen-settings" hidden>
+            <div class="banner hidden" id="settings-banner"></div>
+            <section>
+                <h3>✈ Telegram <span class="badge hidden" id="tg-badge"></span></h3>
+                <div class="grid2">
+                    <label class="field pw"
+                        >Bot Token<input id="s-bot-token" type="password" /><button type="button" class="eye" data-target="s-bot-token">
+                            👁
+                        </button></label
+                    >
+                    <label class="field">Chat ID<input id="s-chat-id" /></label>
+                    <label class="field full"
+                        >Прокси (опционально)
+                        <input id="s-proxy" placeholder="socks5://user:pass@host:1080" />
+                        <small>SOCKS5 или HTTP, пусто = без прокси</small></label
+                    >
+                </div>
+                <button class="btn ghost" id="btn-test-tg">Проверить: отправить тест в чат</button>
+            </section>
+            <section>
+                <h3>🔧 JIRA <span class="badge hidden" id="jira-badge"></span></h3>
+                <div class="grid2">
+                    <label class="field full"
+                        >Хост<input id="s-jira-host" placeholder="jira.yourcompany.com" /><small>без https://</small></label
+                    >
+                    <label class="field">Логин<input id="s-jira-user" /></label>
+                    <label class="field pw"
+                        >Пароль<input id="s-jira-pass" type="password" /><button type="button" class="eye" data-target="s-jira-pass">
+                            👁
+                        </button></label
+                    >
+                </div>
+                <button class="btn ghost" id="btn-test-jira">Проверить подключение</button>
+            </section>
+            <section>
+                <h3>🦊 GitLab <span class="badge hidden" id="gitlab-badge"></span></h3>
+                <div class="grid2">
+                    <label class="field full"
+                        >Хост<input id="s-gitlab-host" placeholder="gitlab.yourcompany.com" /><small>без https://</small></label
+                    >
+                    <label class="field pw"
+                        >Токен<input id="s-gitlab-token" type="password" /><button type="button" class="eye" data-target="s-gitlab-token">
+                            👁
+                        </button></label
+                    >
+                    <label class="field"
+                        >Проект<input id="s-gitlab-project" placeholder="group/repo" /><small>path или numeric id</small></label
+                    >
+                </div>
+                <button class="btn ghost" id="btn-test-gitlab">Проверить подключение</button>
+            </section>
+            <section>
+                <h3>👥 Команда QA</h3>
+                <div class="grid2">
+                    <label class="field full"
+                        >Тестировщики<input id="s-testers" placeholder="user1, user2" />
+                        <small>логины JIRA через запятую — если репортер в списке, тикет назначается ему</small></label
+                    >
+                    <label class="field full">QA-лид<input id="s-lead" /><small>получает тикеты остальных репортеров</small></label>
+                </div>
+            </section>
+            <div class="row-between">
+                <button class="btn ghost" id="btn-settings-cancel">Отмена</button>
+                <button class="btn primary" id="btn-settings-save">Сохранить</button>
+            </div>
+        </main>
 
-<script src="app.js"></script>
-</body>
+        <script src="app.js"></script>
+    </body>
 </html>
